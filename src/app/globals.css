@@ -129,6 +129,12 @@ a {
   text-decoration: none;
 }
 
+img {
+  display: block;
+  max-width: 100%;
+  height: auto;
+}
+
 ul,
 ol {
   list-style: none;
@@ -157,7 +163,7 @@ select {
   align-items: center;
   justify-content: center;
   gap: var(--space-2);
-  border: 1px solid transparent;
+  border: 1px solid var(--color-text);
   border-radius: var(--radius-md);
   padding: var(--space-3) var(--space-5);
   font-size: var(--font-size-sm);
