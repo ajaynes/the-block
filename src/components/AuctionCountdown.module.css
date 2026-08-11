@@ -1,0 +1,28 @@
+.card {
+  display: inline-flex;
+  align-items: center;
+  font-size: var(--font-size-xs);
+  font-weight: 600;
+  color: #fff;
+  background: rgba(0, 0, 0, 0.4);
+  padding: var(--space-1) var(--space-2);
+  border-radius: var(--radius-sm);
+}
+
+.detail {
+  font-size: var(--font-size-2xl);
+  font-weight: 700;
+  color: var(--color-text);
+}
+
+.live {
+  color: var(--color-accent);
+}
+
+.ended {
+  color: rgba(255, 255, 255, 0.75);
+}
+
+.detail.ended {
+  color: var(--color-text-muted);
+}
