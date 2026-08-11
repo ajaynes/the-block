@@ -4,3 +4,16 @@ node_modules/
 .DS_Store
 *.log
 *.bak
+
+# next.js
+/.next/
+/out/
+/build
+*.tsbuildinfo
+next-env.d.ts
+
+# testing
+/coverage
+
+# vercel
+.vercel
