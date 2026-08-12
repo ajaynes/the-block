@@ -129,6 +129,12 @@ a {
   text-decoration: none;
 }
 
+img {
+  display: block;
+  max-width: 100%;
+  height: auto;
+}
+
 ul,
 ol {
   list-style: none;
@@ -153,11 +159,13 @@ select {
 /* buttons */
 
 .btn {
+  position: relative;
+  z-index: 1;
   display: inline-flex;
   align-items: center;
   justify-content: center;
   gap: var(--space-2);
-  border: 1px solid transparent;
+  border: 1px solid var(--color-text);
   border-radius: var(--radius-md);
   padding: var(--space-3) var(--space-5);
   font-size: var(--font-size-sm);
@@ -193,8 +201,19 @@ select {
 /* card */
 
 .card {
+  position: relative;
   background: var(--color-surface);
   border: 1px solid var(--color-border);
   border-radius: var(--radius-lg);
   box-shadow: var(--shadow-sm);
+}
+
+/* Makes an entire .card clickable via one link: apply to the link whose
+   click target should stretch to fill the card. Other interactive elements
+   inside the card (buttons, real links) need position + z-index — see .btn —
+   to stay independently clickable above the overlay. */
+.stretched-link::after {
+  content: "";
+  position: absolute;
+  inset: 0;
 }
