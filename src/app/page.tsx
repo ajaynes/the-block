@@ -1,11 +1,18 @@
 import Image from "next/image";
 import Link from "next/link";
 import { AuctionCountdown } from "@/components/AuctionCountdown";
+import { FilterBar, type FilterGroupKey } from "@/components/FilterBar";
 import { formatCurrency } from "@/lib/format";
-import { getAuctionStatus, getVehicleSlug, vehicles } from "@/lib/vehicles";
+import {
+  filterVehicles,
+  getAuctionStatus,
+  getFilterOptionCounts,
+  getVehicleSlug,
+  vehicles,
+} from "@/lib/vehicles";
 import styles from "./page.module.css";
 
-const PAGE_SIZE = 16;
+const PAGE_SIZE = 12;
 
 function parsePage(value: string | string[] | undefined): number {
   const raw = Array.isArray(value) ? value[0] : value;
@@ -13,78 +20,129 @@ function parsePage(value: string | string[] | undefined): number {
   return Number.isInteger(parsed) ? parsed : 1;
 }
 
-export default async function Home(props: PageProps<"/">) {
-  const { page: pageParam } = await props.searchParams;
+function toArray(value: string | string[] | undefined): string[] {
+  if (!value) return [];
+  return Array.isArray(value) ? value : [value];
+}
 
-  const totalPages = Math.max(1, Math.ceil(vehicles.length / PAGE_SIZE));
-  const page = Math.min(Math.max(parsePage(pageParam), 1), totalPages);
+export default async function Home(props: PageProps<"/">) {
+  const params = await props.searchParams;
+
+  const selected: Record<FilterGroupKey, string[]> = {
+    make: toArray(params.make),
+    status: toArray(params.status),
+    body: toArray(params.body),
+    year: toArray(params.year),
+  };
+
+  const filteredVehicles = filterVehicles(vehicles, {
+    make: selected.make,
+    titleStatus: selected.status,
+    bodyStyle: selected.body,
+    year: selected.year,
+  });
+
+  const totalPages = Math.max(1, Math.ceil(filteredVehicles.length / PAGE_SIZE));
+  const page = Math.min(Math.max(parsePage(params.page), 1), totalPages);
 
   const start = (page - 1) * PAGE_SIZE;
-  const pageVehicles = vehicles.slice(start, start + PAGE_SIZE);
+  const pageVehicles = filteredVehicles.slice(start, start + PAGE_SIZE);
+
+  const optionCounts = getFilterOptionCounts({
+    make: selected.make,
+    titleStatus: selected.status,
+    bodyStyle: selected.body,
+    year: selected.year,
+  });
+  const filterGroups = [
+    { key: "make" as const, label: "Make", options: optionCounts.makes },
+    { key: "status" as const, label: "Title Status", options: optionCounts.titleStatuses },
+    { key: "body" as const, label: "Body Style", options: optionCounts.bodyStyles },
+    { key: "year" as const, label: "Year", options: optionCounts.years },
+  ];
+
+  const pageHref = (targetPage: number) => {
+    const linkParams = new URLSearchParams();
+    for (const group of filterGroups) {
+      for (const value of selected[group.key]) {
+        linkParams.append(group.key, value);
+      }
+    }
+    if (targetPage > 1) linkParams.set("page", String(targetPage));
+    return linkParams.toString() ? `/?${linkParams.toString()}` : "/";
+  };
 
   return (
-    <>
-      <div className={styles.page}>
-        {pageVehicles.map((vehicle) => {
-          const hasEnded = getAuctionStatus(vehicle) === "ended";
+    <div className={styles.layout}>
+      <FilterBar groups={filterGroups} selected={selected} />
 
-          const detailHref = `/vehicles/${getVehicleSlug(vehicle)}`;
+      <div className={styles.content}>
+        <div className={styles.page}>
+          {pageVehicles.map((vehicle) => {
+            const hasEnded = getAuctionStatus(vehicle) === "ended";
 
-          return (
-            <div key={vehicle.id} className="card">
-              <div className={styles.imageWrapper}>
-                <Image src={vehicle.images[0]} alt={`${vehicle.year} ${vehicle.make} ${vehicle.model}`} width={600} height={600} unoptimized />
-                <div className={styles.timerOverlay}>
-                  <AuctionCountdown
-                    auctionStart={vehicle.auctionStart.toISOString()}
-                    auctionEnd={vehicle.auctionEnd.toISOString()}
-                    finalBid={vehicle.current_bid}
-                  />
+            const detailHref = `/vehicles/${getVehicleSlug(vehicle)}`;
+
+            return (
+              <div key={vehicle.id} className="card">
+                <div className={styles.imageWrapper}>
+                  <Image src={vehicle.images[0]} alt={`${vehicle.year} ${vehicle.make} ${vehicle.model}`} width={600} height={600} unoptimized />
+                  <div className={styles.timerOverlay}>
+                    <AuctionCountdown
+                      auctionStart={vehicle.auctionStart.toISOString()}
+                      auctionEnd={vehicle.auctionEnd.toISOString()}
+                      finalBid={vehicle.current_bid}
+                    />
+                  </div>
                 </div>
-              </div>
-              <p>
-                <Link href={detailHref} className="stretched-link">
-                  {vehicle.year} {vehicle.make} {vehicle.model} {vehicle.trim}
-                </Link>
-              </p>
-              <p>{vehicle.city}, {vehicle.province}</p>
-              {hasEnded ? (
                 <p>
-                  Final Bid:{" "}
-                  {vehicle.current_bid === null ? "No bids placed" : formatCurrency(vehicle.current_bid)}
+                  <Link href={detailHref} className="stretched-link">
+                    {vehicle.year} {vehicle.make} {vehicle.model} {vehicle.trim}
+                  </Link>
                 </p>
-              ) : (
-                <>
+                <p>{vehicle.city}, {vehicle.province}</p>
+                {hasEnded ? (
                   <p>
-                    Current Bid:{" "}
-                    {vehicle.current_bid === null ? "No bids yet" : formatCurrency(vehicle.current_bid)}
+                    Final Bid:{" "}
+                    {vehicle.current_bid === null ? "No bids placed" : formatCurrency(vehicle.current_bid)}
                   </p>
-                  <p>Starting Bid: {formatCurrency(vehicle.starting_bid)}</p>
-                </>
-              )}
-              {!hasEnded && (
-                <Link href={detailHref} className="btn">Bid Now</Link>
-              )}
-            </div>
-          );
-        })}
+                ) : (
+                  <>
+                    <p>
+                      Current Bid:{" "}
+                      {vehicle.current_bid === null ? "No bids yet" : formatCurrency(vehicle.current_bid)}
+                    </p>
+                    <p>Starting Bid: {formatCurrency(vehicle.starting_bid)}</p>
+                  </>
+                )}
+                {!hasEnded && (
+                  <Link href={detailHref} className="btn">Bid Now</Link>
+                )}
+              </div>
+            );
+          })}
+        </div>
+
+        {pageVehicles.length === 0 && (
+          <p className={styles.emptyState}>No vehicles match the selected filters.</p>
+        )}
+
+        <nav className={styles.pagination} aria-label="Pagination">
+          {page > 1 ? (
+            <Link href={pageHref(page - 1)} className="btn btn-secondary">Previous</Link>
+          ) : (
+            <span className="btn btn-secondary" aria-disabled="true">Previous</span>
+          )}
+
+          <span>Page {page} of {totalPages}</span>
+
+          {page < totalPages ? (
+            <Link href={pageHref(page + 1)} className="btn btn-secondary">Next</Link>
+          ) : (
+            <span className="btn btn-secondary" aria-disabled="true">Next</span>
+          )}
+        </nav>
       </div>
-
-      <nav className={styles.pagination} aria-label="Pagination">
-        {page > 1 ? (
-          <Link href={`/?page=${page - 1}`} className="btn btn-secondary">Previous</Link>
-        ) : (
-          <span className="btn btn-secondary" aria-disabled="true">Previous</span>
-        )}
-
-        <span>Page {page} of {totalPages}</span>
-
-        {page < totalPages ? (
-          <Link href={`/?page=${page + 1}`} className="btn btn-secondary">Next</Link>
-        ) : (
-          <span className="btn btn-secondary" aria-disabled="true">Next</span>
-        )}
-      </nav>
-    </>
+    </div>
   );
 }

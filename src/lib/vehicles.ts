@@ -33,7 +33,7 @@ type RawVehicle = {
 };
 
 export type Vehicle = RawVehicle & {
-  /** Normalized auction window — see note above normalizeVehicles(). */
+  /** Normalized auction window */
   auctionStart: Date;
   auctionEnd: Date;
 };
@@ -42,13 +42,9 @@ export type AuctionStatus = "upcoming" | "live" | "ended";
 
 const HOUR_MS = 60 * 60 * 1000;
 
-// The dataset's auction_start timestamps are synthetic and fixed to whenever
-// the data was generated, so by the time this app runs they're all in the
-// past — nothing would ever look "live". There's no auction_end in the data
-// either, so we invent both: give every auction a fixed duration, then
-// spread the 200 original start times (preserving their relative order)
-// across a window centered on "now" (app start), so the marketplace shows a
-// believable mix of upcoming, live, and ended auctions.
+// Original timestamps are fixed in the past with no end dates. To simulate a
+// live marketplace, we give auctions a fixed duration and spread their start
+// times across a window centered on "now", preserving their original order.
 const AUCTION_DURATION_HOURS = 24;
 const WINDOW_DAYS_BEFORE_NOW = 4;
 const WINDOW_DAYS_AFTER_NOW = 4;
@@ -90,9 +86,7 @@ function slugify(text: string): string {
     .replace(/^-+|-+$/g, "");
 }
 
-// Titles alone aren't unique — the dataset has 13 repeated
-// year/make/model/trim combos (e.g. two "2017 Volkswagen Golf GTI SE"). The
-// id suffix guarantees the slug always resolves to exactly one vehicle.
+// Appending the ID prevents slug collisions caused by duplicate vehicle titles.
 export function getVehicleSlug(vehicle: Vehicle): string {
   const title = `${vehicle.year} ${vehicle.make} ${vehicle.model} ${vehicle.trim}`;
   return `${slugify(title)}-${vehicle.id}`;
@@ -109,4 +103,70 @@ export function getAuctionStatus(vehicle: Vehicle, now: Date = new Date()): Auct
   if (now < vehicle.auctionStart) return "upcoming";
   if (now < vehicle.auctionEnd) return "live";
   return "ended";
+}
+
+export type FilterOptions = {
+  makes: string[];
+  titleStatuses: string[];
+  bodyStyles: string[];
+  years: number[];
+};
+
+export function getFilterOptions(): FilterOptions {
+  return {
+    makes: [...new Set(vehicles.map((v) => v.make))].sort(),
+    titleStatuses: [...new Set(vehicles.map((v) => v.title_status))].sort(),
+    bodyStyles: [...new Set(vehicles.map((v) => v.body_style))].sort(),
+    years: [...new Set(vehicles.map((v) => v.year))].sort((a, b) => b - a),
+  };
+}
+
+export type VehicleFilters = {
+  make?: string[];
+  titleStatus?: string[];
+  bodyStyle?: string[];
+  year?: string[];
+};
+
+export function filterVehicles(list: Vehicle[], filters: VehicleFilters): Vehicle[] {
+  return list.filter((vehicle) => {
+    if (filters.make?.length && !filters.make.includes(vehicle.make)) return false;
+    if (filters.titleStatus?.length && !filters.titleStatus.includes(vehicle.title_status)) return false;
+    if (filters.bodyStyle?.length && !filters.bodyStyle.includes(vehicle.body_style)) return false;
+    if (filters.year?.length && !filters.year.includes(String(vehicle.year))) return false;
+    return true;
+  });
+}
+
+export type FilterOptionCount = {
+  value: string;
+  count: number;
+};
+
+export type FilterOptionCounts = {
+  makes: FilterOptionCount[];
+  titleStatuses: FilterOptionCount[];
+  bodyStyles: FilterOptionCount[];
+  years: FilterOptionCount[];
+};
+
+// Counts show a hypothetical intersection with OTHER filter groups, but
+// a union within the SAME group. E.g., the "sedan" count applies active
+// makes, but selecting a make doesn't filter out other option counts in Make.
+export function getFilterOptionCounts(filters: VehicleFilters): FilterOptionCounts {
+  const options = getFilterOptions();
+
+  function countsFor(values: string[], key: keyof VehicleFilters): FilterOptionCount[] {
+    return values.map((value) => ({
+      value,
+      count: filterVehicles(vehicles, { ...filters, [key]: [value] }).length,
+    }));
+  }
+
+  return {
+    makes: countsFor(options.makes, "make"),
+    titleStatuses: countsFor(options.titleStatuses, "titleStatus"),
+    bodyStyles: countsFor(options.bodyStyles, "bodyStyle"),
+    years: countsFor(options.years.map(String), "year"),
+  };
 }
