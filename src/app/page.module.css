@@ -1,11 +1,26 @@
-.page {
+.layout {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  grid-template-columns: 260px 1fr;
+  grid-template-areas:
+    "sidebar toolbar"
+    "sidebar content";
+  align-items: start;
   gap: var(--space-5);
   width: 100%;
   max-width: 1200px;
   margin-inline: auto;
   padding: var(--space-6) var(--space-5);
+}
+
+.content {
+  grid-area: content;
+  min-width: 0;
+}
+
+.page {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: var(--space-5);
 }
 
 .imageWrapper {
@@ -23,13 +38,28 @@
   align-items: center;
   justify-content: center;
   gap: var(--space-5);
-  max-width: 1200px;
-  margin-inline: auto;
-  padding: 0 var(--space-5) var(--space-7);
+  padding: var(--space-6) 0 0;
   color: var(--color-text-muted);
 }
 
 .pagination [aria-disabled="true"] {
   opacity: 0.4;
   pointer-events: none;
+}
+
+.emptyState {
+  padding: var(--space-6) 0;
+  color: var(--color-text-muted);
+  text-align: center;
+}
+
+@media (max-width: 800px) {
+  .layout {
+    grid-template-columns: 1fr;
+    grid-template-areas:
+      "mobileToggle"
+      "sidebar"
+      "toolbar"
+      "content";
+  }
 }
