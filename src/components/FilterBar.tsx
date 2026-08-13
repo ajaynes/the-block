@@ -4,10 +4,11 @@ import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import styles from "./FilterBar.module.css";
 
-export type FilterGroupKey = "make" | "status" | "body" | "year";
+export type FilterGroupKey = "auctionStatus" | "make" | "status" | "body" | "year";
 
 export type FilterOption = {
   value: string;
+  label?: string;
   count: number;
 };
 
@@ -20,6 +21,7 @@ export type FilterGroup = {
 type Props = {
   groups: FilterGroup[];
   selected: Record<FilterGroupKey, string[]>;
+  sort: string;
 };
 
 const VISIBLE_OPTIONS_LIMIT = 5;
@@ -37,7 +39,7 @@ function groupsWithHiddenSelection(
     .map((group) => group.key);
 }
 
-export function FilterBar({ groups, selected }: Props) {
+export function FilterBar({ groups, selected, sort }: Props) {
   const router = useRouter();
   const pathname = usePathname();
 
@@ -54,38 +56,45 @@ export function FilterBar({ groups, selected }: Props) {
     () => new Set(groupsWithHiddenSelection(groups, selected)),
   );
 
- // `selected` lags until router.push() completes. Mirroring to
+ // `selected` (and `sort`) lag until router.push() completes. Mirroring to
  // local state ensures instant UI feedback on click; a separate
  // effect resyncs it whenever navigation actually lands.
   const [localSelected, setLocalSelected] = useState(selected);
+  const [localSort, setLocalSort] = useState(sort);
   useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect
     setLocalSelected(selected);
+    setLocalSort(sort);
     const needsExpansion = groupsWithHiddenSelection(groups, selected);
     if (needsExpansion.length > 0) {
       setExpandedGroups((prev) => new Set([...prev, ...needsExpansion]));
     }
     // `groups` is static; omitting it keeps the effect tied purely to navigation.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [selected]);
+  }, [selected, sort]);
 
   const activeCount = Object.values(localSelected).reduce((sum, values) => sum + values.length, 0);
 
   const chips = groups.flatMap((group) =>
-    (localSelected[group.key] ?? []).map((value) => ({
-      key: group.key,
-      label: group.label,
-      value,
-    })),
+    (localSelected[group.key] ?? []).map((value) => {
+      const option = group.options.find((o) => o.value === value);
+      return {
+        key: group.key,
+        label: group.label,
+        value,
+        displayValue: option?.label ?? value,
+      };
+    }),
   );
 
-  function navigate(nextSelected: Record<FilterGroupKey, string[]>) {
+  function navigate(nextSelected: Record<FilterGroupKey, string[]>, nextSort: string) {
     const params = new URLSearchParams();
     for (const group of groups) {
       for (const value of nextSelected[group.key] ?? []) {
         params.append(group.key, value);
       }
     }
+    if (nextSort) params.set("sort", nextSort);
     router.push(params.toString() ? `${pathname}?${params.toString()}` : pathname);
   }
 
@@ -96,7 +105,12 @@ export function FilterBar({ groups, selected }: Props) {
       : [...current, value];
     const next = { ...localSelected, [key]: nextValues };
     setLocalSelected(next);
-    navigate(next);
+    navigate(next, localSort);
+  }
+
+  function handleSortChange(value: string) {
+    setLocalSort(value);
+    navigate(localSelected, value);
   }
 
   function toggleGroupOpen(key: FilterGroupKey) {
@@ -129,7 +143,7 @@ export function FilterBar({ groups, selected }: Props) {
       cleared[group.key] = [];
     }
     setLocalSelected(cleared);
-    router.push(pathname);
+    navigate(cleared, localSort);
   }
 
   return (
@@ -178,7 +192,7 @@ export function FilterBar({ groups, selected }: Props) {
                         checked={values.includes(option.value)}
                         onChange={() => toggleValue(group.key, option.value)}
                       />
-                      {option.value}
+                      {option.label ?? option.value}
                       <span className={styles.optionCount}>({option.count})</span>
                     </label>
                   ))}
@@ -204,7 +218,7 @@ export function FilterBar({ groups, selected }: Props) {
         <div className={styles.chips}>
           {chips.map((chip) => (
             <span key={`${chip.key}-${chip.value}`} className={styles.chip}>
-              {chip.label}: {chip.value}
+              {chip.label}: {chip.displayValue}
               <button
                 type="button"
                 className={styles.chipRemove}
@@ -222,13 +236,16 @@ export function FilterBar({ groups, selected }: Props) {
           )}
         </div>
 
-        <select className={styles.sort} disabled defaultValue="">
-          <option value="" disabled>
-            Sort by
-          </option>
-          <option value="ending-soon">Ending soon</option>
+        <select
+          className={styles.sort}
+          value={localSort}
+          onChange={(e) => handleSortChange(e.target.value)}
+        >
+          <option value="">Sort by</option>
+          <option value="ending-soonest">Ending soonest</option>
           <option value="price-low">Price: Low to High</option>
           <option value="price-high">Price: High to Low</option>
+          <option value="alphabetical">Alphabetical (A–Z)</option>
         </select>
       </div>
     </>
