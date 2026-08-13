@@ -8,11 +8,14 @@ import {
   getAuctionStatus,
   getFilterOptionCounts,
   getVehicleSlug,
+  sortVehicles,
   vehicles,
+  type SortOption,
 } from "@/lib/vehicles";
 import styles from "./page.module.css";
 
 const PAGE_SIZE = 12;
+const SORT_OPTIONS: SortOption[] = ["ending-soonest", "price-low", "price-high", "alphabetical"];
 
 function parsePage(value: string | string[] | undefined): number {
   const raw = Array.isArray(value) ? value[0] : value;
@@ -25,22 +28,34 @@ function toArray(value: string | string[] | undefined): string[] {
   return Array.isArray(value) ? value : [value];
 }
 
+function parseSort(value: string | string[] | undefined): SortOption | undefined {
+  const raw = Array.isArray(value) ? value[0] : value;
+  return SORT_OPTIONS.find((option) => option === raw);
+}
+
 export default async function Home(props: PageProps<"/">) {
   const params = await props.searchParams;
 
   const selected: Record<FilterGroupKey, string[]> = {
+    auctionStatus: toArray(params.auctionStatus),
     make: toArray(params.make),
     status: toArray(params.status),
     body: toArray(params.body),
     year: toArray(params.year),
   };
 
-  const filteredVehicles = filterVehicles(vehicles, {
-    make: selected.make,
-    titleStatus: selected.status,
-    bodyStyle: selected.body,
-    year: selected.year,
-  });
+  const sort = parseSort(params.sort);
+
+  const filteredVehicles = sortVehicles(
+    filterVehicles(vehicles, {
+      auctionStatus: selected.auctionStatus,
+      make: selected.make,
+      titleStatus: selected.status,
+      bodyStyle: selected.body,
+      year: selected.year,
+    }),
+    sort,
+  );
 
   const totalPages = Math.max(1, Math.ceil(filteredVehicles.length / PAGE_SIZE));
   const page = Math.min(Math.max(parsePage(params.page), 1), totalPages);
@@ -49,12 +64,14 @@ export default async function Home(props: PageProps<"/">) {
   const pageVehicles = filteredVehicles.slice(start, start + PAGE_SIZE);
 
   const optionCounts = getFilterOptionCounts({
+    auctionStatus: selected.auctionStatus,
     make: selected.make,
     titleStatus: selected.status,
     bodyStyle: selected.body,
     year: selected.year,
   });
   const filterGroups = [
+    { key: "auctionStatus" as const, label: "Auction Status", options: optionCounts.auctionStatuses },
     { key: "make" as const, label: "Make", options: optionCounts.makes },
     { key: "status" as const, label: "Title Status", options: optionCounts.titleStatuses },
     { key: "body" as const, label: "Body Style", options: optionCounts.bodyStyles },
@@ -68,13 +85,14 @@ export default async function Home(props: PageProps<"/">) {
         linkParams.append(group.key, value);
       }
     }
+    if (sort) linkParams.set("sort", sort);
     if (targetPage > 1) linkParams.set("page", String(targetPage));
     return linkParams.toString() ? `/?${linkParams.toString()}` : "/";
   };
 
   return (
     <div className={styles.layout}>
-      <FilterBar groups={filterGroups} selected={selected} />
+      <FilterBar groups={filterGroups} selected={selected} sort={sort ?? ""} />
 
       <div className={styles.content}>
         <div className={styles.page}>
@@ -112,7 +130,7 @@ export default async function Home(props: PageProps<"/">) {
                       Current Bid:{" "}
                       {vehicle.current_bid === null ? "No bids yet" : formatCurrency(vehicle.current_bid)}
                     </p>
-                    <p>Starting Bid: {formatCurrency(vehicle.starting_bid)}</p>
+                    {/* <p>Starting Bid: {formatCurrency(vehicle.starting_bid)}</p> */}
                   </>
                 )}
                 {!hasEnded && (

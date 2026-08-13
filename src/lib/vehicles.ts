@@ -126,24 +126,40 @@ export type VehicleFilters = {
   titleStatus?: string[];
   bodyStyle?: string[];
   year?: string[];
+  auctionStatus?: string[];
 };
 
 export function filterVehicles(list: Vehicle[], filters: VehicleFilters): Vehicle[] {
+  const now = new Date();
   return list.filter((vehicle) => {
     if (filters.make?.length && !filters.make.includes(vehicle.make)) return false;
     if (filters.titleStatus?.length && !filters.titleStatus.includes(vehicle.title_status)) return false;
     if (filters.bodyStyle?.length && !filters.bodyStyle.includes(vehicle.body_style)) return false;
     if (filters.year?.length && !filters.year.includes(String(vehicle.year))) return false;
+    if (filters.auctionStatus?.length && !filters.auctionStatus.includes(getAuctionStatus(vehicle, now))) {
+      return false;
+    }
     return true;
   });
 }
 
 export type FilterOptionCount = {
   value: string;
+  label?: string;
   count: number;
 };
 
+// Maps UI labels (e.g., "Active") to internal `AuctionStatus` enum
+// values ("live"/"upcoming"/"ended") for URL routing and matching.
+const AUCTION_STATUS_VALUES: AuctionStatus[] = ["live", "upcoming", "ended"];
+const AUCTION_STATUS_LABELS: Record<AuctionStatus, string> = {
+  live: "Active",
+  upcoming: "Upcoming",
+  ended: "Ended",
+};
+
 export type FilterOptionCounts = {
+  auctionStatuses: FilterOptionCount[];
   makes: FilterOptionCount[];
   titleStatuses: FilterOptionCount[];
   bodyStyles: FilterOptionCount[];
@@ -164,9 +180,69 @@ export function getFilterOptionCounts(filters: VehicleFilters): FilterOptionCoun
   }
 
   return {
+    auctionStatuses: AUCTION_STATUS_VALUES.map((value) => ({
+      value,
+      label: AUCTION_STATUS_LABELS[value],
+      count: filterVehicles(vehicles, { ...filters, auctionStatus: [value] }).length,
+    })),
     makes: countsFor(options.makes, "make"),
     titleStatuses: countsFor(options.titleStatuses, "titleStatus"),
     bodyStyles: countsFor(options.bodyStyles, "bodyStyle"),
     years: countsFor(options.years.map(String), "year"),
   };
+}
+
+export type SortOption = "ending-soonest" | "price-low" | "price-high" | "alphabetical";
+
+const STATUS_PRIORITY: Record<AuctionStatus, number> = {
+  live: 0,
+  upcoming: 1,
+  ended: 2,
+};
+
+// "Ending soonest" prioritizes active buyers: live auctions closing first,
+// followed by upcoming auctions starting next, with ended auctions pushed
+// to the absolute bottom.
+function compareEndingSoonest(a: Vehicle, b: Vehicle, now: Date): number {
+  const statusA = getAuctionStatus(a, now);
+  const statusB = getAuctionStatus(b, now);
+
+  if (statusA !== statusB) {
+    return STATUS_PRIORITY[statusA] - STATUS_PRIORITY[statusB];
+  }
+  if (statusA === "upcoming") {
+    return a.auctionStart.getTime() - b.auctionStart.getTime();
+  }
+  if (statusA === "ended") {
+    return b.auctionEnd.getTime() - a.auctionEnd.getTime();
+  }
+  return a.auctionEnd.getTime() - b.auctionEnd.getTime();
+}
+
+// Vehicles with no bids yet (current_bid: null) sort as the lowest price —
+// first in low-to-high, last in high-to-low — rather than being excluded
+// or treated as $0, which could tie with an actual $0 bid.
+function priceValue(vehicle: Vehicle): number {
+  return vehicle.current_bid ?? -Infinity;
+}
+
+export function sortVehicles(list: Vehicle[], sort: SortOption | undefined): Vehicle[] {
+  const sorted = [...list];
+
+  switch (sort) {
+    case "price-low":
+      return sorted.sort((a, b) => priceValue(a) - priceValue(b));
+    case "price-high":
+      return sorted.sort((a, b) => priceValue(b) - priceValue(a));
+    case "alphabetical":
+      return sorted.sort((a, b) =>
+        `${a.make} ${a.model}`.localeCompare(`${b.make} ${b.model}`),
+      );
+    case "ending-soonest": {
+      const now = new Date();
+      return sorted.sort((a, b) => compareEndingSoonest(a, b, now));
+    }
+    default:
+      return sorted;
+  }
 }
