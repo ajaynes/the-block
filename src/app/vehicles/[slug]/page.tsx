@@ -1,8 +1,18 @@
 import Image from "next/image";
+import Link from "next/link";
 import { notFound } from "next/navigation";
 import { AuctionCountdown } from "@/components/AuctionCountdown";
 import { formatCurrency } from "@/lib/format";
-import { getAuctionStatus, getVehicleBySlug } from "@/lib/vehicles";
+import {
+  getAuctionStatus,
+  getEffectiveBidInfo,
+  getRelatedVehicles,
+  getVehicleBySlug,
+  getVehicleSlug,
+} from "@/lib/vehicles";
+import styles from "./page.module.css";
+
+const RELATED_COUNT = 4;
 
 export default async function VehicleDetailPage(props: PageProps<"/vehicles/[slug]">) {
   const { slug } = await props.params;
@@ -13,26 +23,18 @@ export default async function VehicleDetailPage(props: PageProps<"/vehicles/[slu
   }
 
   const status = getAuctionStatus(vehicle);
+  const hasEnded = status === "ended";
+  const isLive = status === "live";
+  const { currentBid, bidCount } = getEffectiveBidInfo(vehicle);
+  const relatedVehicles = getRelatedVehicles(vehicle, RELATED_COUNT);
 
   return (
-    <main className="container" style={{ paddingTop: "var(--space-6)", paddingBottom: "var(--space-8)" }}>
-      <h1>
-        {vehicle.year} {vehicle.make} {vehicle.model} {vehicle.trim}
-      </h1>
-      <p>Lot {vehicle.lot}</p>
-
-      <p>
-        <AuctionCountdown
-          auctionStart={vehicle.auctionStart.toISOString()}
-          auctionEnd={vehicle.auctionEnd.toISOString()}
-          finalBid={vehicle.current_bid}
-          variant="detail"
-        />
-      </p>
-
-      <section style={{ marginTop: "var(--space-6)" }}>
-        <h2>Photos</h2>
-        <div style={{ display: "flex", flexWrap: "wrap", gap: "var(--space-3)" }}>
+    <main className={styles.layout}>
+      <div>
+        <h1 className={`show-mobile ${styles.mobiletitle}`}>
+          {vehicle.year} {vehicle.make} {vehicle.model}
+        </h1>
+        <div className={styles.gallery}>
           {vehicle.images.map((src, index) => (
             <Image
               key={src}
@@ -41,62 +43,207 @@ export default async function VehicleDetailPage(props: PageProps<"/vehicles/[slu
               width={280}
               height={210}
               unoptimized
+              className={styles.galleryImage}
             />
           ))}
         </div>
-      </section>
 
-      <section style={{ marginTop: "var(--space-6)" }}>
-        <h2>Auction</h2>
-        <p>Status: {status}</p>
-        <p>
-          Current Bid:{" "}
-          {vehicle.current_bid === null ? "No bids yet" : formatCurrency(vehicle.current_bid)}
-        </p>
-        <p>Starting Bid: {formatCurrency(vehicle.starting_bid)}</p>
-        <p>Reserve Price: {formatCurrency(vehicle.reserve_price)}</p>
-        <p>
-          Buy Now Price:{" "}
-          {vehicle.buy_now_price === null ? "N/A" : formatCurrency(vehicle.buy_now_price)}
-        </p>
-        <p>Bid Count: {vehicle.bid_count}</p>
-      </section>
+        <table className={styles.specsTable}>
+          <thead>
+            <tr>
+              <th colSpan={2}>Vehicle Information</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <th scope="row">Trim</th>
+              <td>{vehicle.trim}</td>
+            </tr>
+            <tr>
+              <th scope="row">VIN</th>
+              <td>{vehicle.vin}</td>
+            </tr>
+            <tr>
+              <th scope="row">Body Style</th>
+              <td>{vehicle.body_style}</td>
+            </tr>
+            <tr>
+              <th scope="row">Exterior Color</th>
+              <td>{vehicle.exterior_color}</td>
+            </tr>
+            <tr>
+              <th scope="row">Interior Color</th>
+              <td>{vehicle.interior_color}</td>
+            </tr>
+            <tr>
+              <th scope="row">Engine</th>
+              <td>{vehicle.engine}</td>
+            </tr>
+            <tr>
+              <th scope="row">Transmission</th>
+              <td>{vehicle.transmission}</td>
+            </tr>
+            <tr>
+              <th scope="row">Drivetrain</th>
+              <td>{vehicle.drivetrain}</td>
+            </tr>
+            <tr>
+              <th scope="row">Odometer</th>
+              <td>{vehicle.odometer_km.toLocaleString()} km</td>
+            </tr>
+            <tr>
+              <th scope="row">Fuel Type</th>
+              <td>{vehicle.fuel_type}</td>
+            </tr>
+            <tr>
+              <th scope="row">Condition Grade</th>
+              <td>{vehicle.condition_grade}</td>
+            </tr>
+            <tr>
+              <th scope="row">Condition Report</th>
+              <td>{vehicle.condition_report}</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
 
-      <section style={{ marginTop: "var(--space-6)" }}>
-        <h2>Specs</h2>
-        <p>VIN: {vehicle.vin}</p>
-        <p>Body Style: {vehicle.body_style}</p>
-        <p>Exterior Color: {vehicle.exterior_color}</p>
-        <p>Interior Color: {vehicle.interior_color}</p>
-        <p>Engine: {vehicle.engine}</p>
-        <p>Transmission: {vehicle.transmission}</p>
-        <p>Drivetrain: {vehicle.drivetrain}</p>
-        <p>Odometer: {vehicle.odometer_km.toLocaleString()} km</p>
-        <p>Fuel Type: {vehicle.fuel_type}</p>
-      </section>
+      <div>
+        <h1 className={`hide-mobile ${styles.title}`}>
+          {vehicle.year} {vehicle.make} {vehicle.model}
+        </h1>
+        <div className={`card ${styles.bidBox}`}>
+          {hasEnded ? (
+            <p className={styles.currentBid}>
+              Final Bid:{" "}
+              {currentBid === null ? "No bids placed" : formatCurrency(currentBid)}
+            </p>
+          ) : (
+            <>
+              <p className={styles.currentBid}>
+                Current Bid:{" "}
+                {currentBid === null ? "No bids yet" : formatCurrency(currentBid)}
+              </p>
+              <p className={styles.bidCount}>
+                {bidCount} {bidCount === 1 ? "bid" : "bids"}
+              </p>
+            </>
+          )}
 
-      <section style={{ marginTop: "var(--space-6)" }}>
-        <h2>Condition</h2>
-        <p>Grade: {vehicle.condition_grade}</p>
-        <p>Title Status: {vehicle.title_status}</p>
-        <p>{vehicle.condition_report}</p>
-        {vehicle.damage_notes.length > 0 && (
-          <>
-            <h3>Damage Notes</h3>
-            <ul>
-              {vehicle.damage_notes.map((note) => (
-                <li key={note}>{note}</li>
+          <AuctionCountdown
+            auctionStart={vehicle.auctionStart.toISOString()}
+            auctionEnd={vehicle.auctionEnd.toISOString()}
+            finalBid={currentBid}
+            variant="detail"
+          />
+
+          {isLive && (
+            <div className={styles.bidRow}>
+              <input
+                type="number"
+                min={(currentBid ?? vehicle.starting_bid) + 1}
+                step={1}
+                placeholder={`${formatCurrency((currentBid ?? vehicle.starting_bid) + 1)} or more`}
+                aria-label="Bid amount"
+              />
+              <button type="button" className="btn btn-primary">
+                Place Bid
+              </button>
+            </div>
+          )}
+
+          {status === "upcoming" && (
+            <p className={styles.bidNotice}>Bidding opens when the auction starts.</p>
+          )}
+
+          {!hasEnded && (
+            <p className={styles.bidMeta}>
+              Starting Bid: {formatCurrency(vehicle.starting_bid)}
+              {vehicle.buy_now_price !== null && <> · Buy Now: {formatCurrency(vehicle.buy_now_price)}</>}
+            </p>
+          )}
+        </div>
+        <table className={styles.specsTable}>
+          <thead>
+            <tr>
+              <th colSpan={2}>Sales Information</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <th scope="row">Sales Location</th>
+              <td>{vehicle.city}, {vehicle.province}</td>
+            </tr>
+            <tr>
+              <th scope="row">Seller</th>
+              <td>{vehicle.selling_dealership}</td>
+            </tr>
+            <tr>
+              <th scope="row">Lot</th>
+              <td>{vehicle.lot}</td>
+            </tr>
+            <tr>
+              <th scope="row">Title Status</th>
+              <td>{vehicle.title_status}</td>
+            </tr>
+            <tr>
+              <th scope="row">Damage Notes</th>
+              <td>
+                {vehicle.damage_notes.length > 0 ? (
+                  <details>
+                    <summary className={styles.damageSummary}>
+                      {vehicle.damage_notes.length} {vehicle.damage_notes.length === 1 ? "item" : "items"}
+                    </summary>
+                    <ul className={styles.damageList}>
+                      {vehicle.damage_notes.map((note) => (
+                        <li key={note}>{note}</li>
+                      ))}
+                    </ul>
+                  </details>
+                ) : (
+                  <span className={styles.noDamage}>None reported</span>
+                )}
+              </td>
+            </tr>
+          </tbody>
+        </table>
+
+
+
+        {relatedVehicles.length > 0 && (
+          <div className={styles.related}>
+            <h2 className={styles.relatedHeading}>Related Auctions</h2>
+            <div className={styles.relatedGrid}>
+              {relatedVehicles.map((related) => (
+                <Link
+                  key={related.id}
+                  href={`/vehicles/${getVehicleSlug(related)}`}
+                  className={styles.relatedCard}
+                >
+                  <div className={styles.relatedImageWrapper}>
+                    <Image
+                      src={related.images[0]}
+                      alt={`${related.year} ${related.make} ${related.model}`}
+                      width={200}
+                      height={150}
+                      unoptimized
+                      className={styles.relatedImage}
+                    />
+                    <div className={styles.relatedBadge}>
+                      <AuctionCountdown
+                        auctionStart={related.auctionStart.toISOString()}
+                        auctionEnd={related.auctionEnd.toISOString()}
+                      />
+                    </div>
+                  </div>
+                  <p className={styles.relatedTitle}>
+                    {related.year} {related.make} {related.model}
+                  </p>
+                </Link>
               ))}
-            </ul>
-          </>
+            </div>
+          </div>
         )}
-      </section>
-
-      <section style={{ marginTop: "var(--space-6)" }}>
-        <h2>Location &amp; Seller</h2>
-        <p>{vehicle.city}, {vehicle.province}</p>
-        <p>Selling Dealership: {vehicle.selling_dealership}</p>
-      </section>
+      </div>
     </main>
   );
 }

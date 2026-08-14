@@ -217,3 +217,23 @@ select {
   position: absolute;
   inset: 0;
 }
+
+/* responsive visibility */
+
+.show-mobile {
+  display: none;
+}
+
+.hide-mobile {
+  display: block;
+}
+
+@media (max-width: 800px) {
+  .show-mobile {
+    display: block;
+  }
+
+  .hide-mobile {
+    display: none;
+  }
+}

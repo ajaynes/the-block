@@ -105,6 +105,25 @@ export function getAuctionStatus(vehicle: Vehicle, now: Date = new Date()): Auct
   return "ended";
 }
 
+export type BidInfo = {
+  currentBid: number | null;
+  bidCount: number;
+};
+
+// The dataset's current_bid/bid_count are static snapshots that don't know
+// about our normalized auction window (see normalizeVehicles above) — a
+// vehicle can land on "upcoming" status while still carrying bid data from
+// the original dataset, which is impossible (no auction, no bids yet). This
+// is the single place that resolves the two against each other; every
+// display or sort that touches bid data should read through it rather than
+// vehicle.current_bid/bid_count directly.
+export function getEffectiveBidInfo(vehicle: Vehicle, now: Date = new Date()): BidInfo {
+  if (getAuctionStatus(vehicle, now) === "upcoming") {
+    return { currentBid: null, bidCount: 0 };
+  }
+  return { currentBid: vehicle.current_bid, bidCount: vehicle.bid_count };
+}
+
 export type FilterOptions = {
   makes: string[];
   titleStatuses: string[];
@@ -219,29 +238,47 @@ function compareEndingSoonest(a: Vehicle, b: Vehicle, now: Date): number {
   return a.auctionEnd.getTime() - b.auctionEnd.getTime();
 }
 
-// Vehicles with no bids yet (current_bid: null) sort as the lowest price —
-// first in low-to-high, last in high-to-low — rather than being excluded
-// or treated as $0, which could tie with an actual $0 bid.
-function priceValue(vehicle: Vehicle): number {
-  return vehicle.current_bid ?? -Infinity;
+// Vehicles with no bids yet (current_bid: null, including any upcoming
+// auction — see getEffectiveBidInfo) sort as the lowest price — first in
+// low-to-high, last in high-to-low — rather than being excluded or treated
+// as $0, which could tie with an actual $0 bid.
+function priceValue(vehicle: Vehicle, now: Date): number {
+  return getEffectiveBidInfo(vehicle, now).currentBid ?? -Infinity;
+}
+
+// A random sample of other live/upcoming vehicles — ended auctions aren't
+// useful to surface as "check this out next." Excludes the vehicle itself.
+export function getRelatedVehicles(vehicle: Vehicle, count: number, now: Date = new Date()): Vehicle[] {
+  const pool = vehicles.filter((candidate) => {
+    if (candidate.id === vehicle.id) return false;
+    const candidateStatus = getAuctionStatus(candidate, now);
+    return candidateStatus === "live" || candidateStatus === "upcoming";
+  });
+
+  const shuffled = [...pool];
+  for (let i = shuffled.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+  }
+
+  return shuffled.slice(0, count);
 }
 
 export function sortVehicles(list: Vehicle[], sort: SortOption | undefined): Vehicle[] {
   const sorted = [...list];
+  const now = new Date();
 
   switch (sort) {
     case "price-low":
-      return sorted.sort((a, b) => priceValue(a) - priceValue(b));
+      return sorted.sort((a, b) => priceValue(a, now) - priceValue(b, now));
     case "price-high":
-      return sorted.sort((a, b) => priceValue(b) - priceValue(a));
+      return sorted.sort((a, b) => priceValue(b, now) - priceValue(a, now));
     case "alphabetical":
       return sorted.sort((a, b) =>
         `${a.make} ${a.model}`.localeCompare(`${b.make} ${b.model}`),
       );
-    case "ending-soonest": {
-      const now = new Date();
+    case "ending-soonest":
       return sorted.sort((a, b) => compareEndingSoonest(a, b, now));
-    }
     default:
       return sorted;
   }

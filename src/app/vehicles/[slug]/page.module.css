@@ -1,0 +1,228 @@
+.layout {
+  display: grid;
+  grid-template-columns: 3fr 2fr;
+  align-items: start;
+  gap: var(--space-6);
+  width: 100%;
+  max-width: 1200px;
+  margin-inline: auto;
+  padding: var(--space-6) var(--space-5) var(--space-8);
+}
+
+/* Grid items default to min-width: auto, which refuses to shrink below the
+   min-content width of their contents — the other classic cause of a grid
+   column forcing the page wider than the viewport. */
+.layout > div {
+  min-width: 0;
+}
+
+/* left column: gallery + specs */
+
+.gallery {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+}
+
+.galleryImage {
+  flex: 1 1 220px;
+  height: auto;
+  border-radius: var(--radius-md);
+}
+
+.specsTable {
+  width: 100%;
+  margin-top: var(--space-5);
+  border-collapse: collapse;
+  font-size: var(--font-size-sm);
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  overflow: hidden;
+}
+
+.specsTable th,
+.specsTable td {
+  text-align: left;
+  padding: var(--space-2) var(--space-3);
+}
+
+.specsTable th {
+  width: 40%;
+  color: var(--color-text-muted);
+  font-weight: 600;
+}
+
+.specsTable tr:nth-child(even) {
+  background: var(--color-bg);
+}
+
+.specsTable thead {
+  border-bottom: 3px solid var(--color-surface);
+}
+
+.specsTable thead th {
+  font-weight: bold;
+  color: var(--color-text);
+  background-color: var(--color-bg);
+  font-size: var(--font-size-lg);
+}
+
+/* right column: title, seller, status, bid box */
+
+.title {
+  margin-top: 0;
+}
+.mobiletitle {
+  margin-top: 0;
+  font-size: var(--font-size-2xl);
+}
+
+.lot {
+  color: var(--color-text-muted);
+}
+
+.sellerInfo {
+  margin-top: var(--space-3);
+}
+
+.titleStatusRow {
+  margin-top: var(--space-3);
+}
+
+.capitalize {
+  text-transform: capitalize;
+}
+
+.noDamage {
+  color: var(--color-text-muted);
+}
+
+.damageSummary {
+  font-weight: 600;
+  color: var(--color-accent);
+  cursor: pointer;
+}
+
+.damageSummary::marker {
+  color: var(--color-text-muted);
+}
+
+.damageList {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  margin-top: var(--space-2);
+  padding-left: var(--space-5);
+  color: var(--color-text-muted);
+  font-size: var(--font-size-sm);
+}
+
+.damageList li {
+  list-style: disc;
+}
+
+.bidBox {
+  margin-top: var(--space-5);
+  padding: var(--space-5);
+}
+
+.currentBid {
+  font-size: var(--font-size-xl);
+  font-weight: 700;
+}
+
+.bidCount {
+  color: var(--color-text-muted);
+  font-size: var(--font-size-sm);
+  margin-bottom: var(--space-3);
+}
+
+.bidRow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  margin-top: var(--space-4);
+}
+
+.bidRow input {
+  flex: 1 1 160px;
+  min-width: 0;
+  max-width: 100%;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  padding: var(--space-3);
+  font-size: var(--font-size-base);
+  background: var(--color-surface);
+  color: var(--color-text);
+  /* Native number-input spinners render at inconsistent, sometimes wide
+     widths across mobile browsers, which can push this row past the
+     viewport — remove them since they're unstyled anyway. */
+  -moz-appearance: textfield;
+  appearance: textfield;
+}
+
+.bidRow input::-webkit-outer-spin-button,
+.bidRow input::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+.bidNotice {
+  margin-top: var(--space-4);
+  color: var(--color-text-muted);
+  font-size: var(--font-size-sm);
+}
+
+.bidMeta {
+  margin-top: var(--space-4);
+  color: var(--color-text-muted);
+  font-size: var(--font-size-sm);
+}
+
+.related {
+  margin-top: var(--space-6);
+}
+
+.relatedHeading {
+  font-size: var(--font-size-lg);
+}
+
+.relatedGrid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: var(--space-3);
+  margin-top: var(--space-3);
+}
+
+.relatedCard {
+  display: block;
+}
+
+.relatedImageWrapper {
+  position: relative;
+}
+
+.relatedImage {
+  width: 100%;
+  height: auto;
+  border-radius: var(--radius-md);
+}
+
+.relatedBadge {
+  position: absolute;
+  left: var(--space-2);
+  bottom: var(--space-2);
+}
+
+.relatedTitle {
+  margin-top: var(--space-2);
+  font-size: var(--font-size-sm);
+  font-weight: 600;
+}
+
+@media (max-width: 800px) {
+  .layout {
+    grid-template-columns: 1fr;
+  }
+}
