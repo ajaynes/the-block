@@ -34,6 +34,11 @@ function parseSort(value: string | string[] | undefined): SortOption | undefined
   return SORT_OPTIONS.find((option) => option === raw);
 }
 
+function parseSearch(value: string | string[] | undefined): string {
+  const raw = Array.isArray(value) ? value[0] : value;
+  return raw?.trim() ?? "";
+}
+
 export default async function Home(props: PageProps<"/">) {
   const params = await props.searchParams;
 
@@ -46,6 +51,7 @@ export default async function Home(props: PageProps<"/">) {
   };
 
   const sort = parseSort(params.sort);
+  const search = parseSearch(params.q);
 
   const filteredVehicles = sortVehicles(
     filterVehicles(vehicles, {
@@ -54,6 +60,7 @@ export default async function Home(props: PageProps<"/">) {
       titleStatus: selected.status,
       bodyStyle: selected.body,
       year: selected.year,
+      search,
     }),
     sort,
   );
@@ -70,6 +77,7 @@ export default async function Home(props: PageProps<"/">) {
     titleStatus: selected.status,
     bodyStyle: selected.body,
     year: selected.year,
+    search,
   });
   const filterGroups = [
     { key: "auctionStatus" as const, label: "Auction Status", options: optionCounts.auctionStatuses },
@@ -87,15 +95,33 @@ export default async function Home(props: PageProps<"/">) {
       }
     }
     if (sort) linkParams.set("sort", sort);
+    if (search) linkParams.set("q", search);
     if (targetPage > 1) linkParams.set("page", String(targetPage));
     return linkParams.toString() ? `/?${linkParams.toString()}` : "/";
   };
+
+  const clearSearchHref = (() => {
+    const linkParams = new URLSearchParams();
+    for (const group of filterGroups) {
+      for (const value of selected[group.key]) {
+        linkParams.append(group.key, value);
+      }
+    }
+    if (sort) linkParams.set("sort", sort);
+    return linkParams.toString() ? `/?${linkParams.toString()}` : "/";
+  })();
 
   return (
     <div className={styles.layout}>
       <FilterBar groups={filterGroups} selected={selected} sort={sort ?? ""} />
 
       <div className={styles.content}>
+        {search && (
+          <p className={styles.searchNotice}>
+            Search results for &ldquo;{search}&rdquo; ({filteredVehicles.length}){" "}
+            <Link href={clearSearchHref}>Clear search</Link>
+          </p>
+        )}
         <div className={styles.page}>
           {pageVehicles.map((vehicle) => {
             const hasEnded = getAuctionStatus(vehicle) === "ended";
