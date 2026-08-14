@@ -195,32 +195,6 @@
   margin-top: var(--space-3);
 }
 
-.relatedCard {
-  display: block;
-}
-
-.relatedImageWrapper {
-  position: relative;
-}
-
-.relatedImage {
-  width: 100%;
-  height: auto;
-  border-radius: var(--radius-md);
-}
-
-.relatedBadge {
-  position: absolute;
-  left: var(--space-2);
-  bottom: var(--space-2);
-}
-
-.relatedTitle {
-  margin-top: var(--space-2);
-  font-size: var(--font-size-sm);
-  font-weight: 600;
-}
-
 @media (max-width: 800px) {
   .layout {
     grid-template-columns: 1fr;

@@ -1,0 +1,4 @@
+.button[data-watched="true"] {
+  border-color: var(--color-accent);
+  color: var(--color-accent);
+}
