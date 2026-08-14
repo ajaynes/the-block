@@ -1,14 +1,9 @@
-import Image from "next/image";
 import Link from "next/link";
-import { AuctionCountdown } from "@/components/AuctionCountdown";
 import { FilterBar, type FilterGroupKey } from "@/components/FilterBar";
-import { formatCurrency } from "@/lib/format";
+import { VehicleCard } from "@/components/VehicleCard";
 import {
   filterVehicles,
-  getAuctionStatus,
-  getEffectiveBidInfo,
   getFilterOptionCounts,
-  getVehicleSlug,
   sortVehicles,
   vehicles,
   type SortOption,
@@ -123,50 +118,9 @@ export default async function Home(props: PageProps<"/">) {
           </p>
         )}
         <div className={styles.page}>
-          {pageVehicles.map((vehicle) => {
-            const hasEnded = getAuctionStatus(vehicle) === "ended";
-            const { currentBid } = getEffectiveBidInfo(vehicle);
-
-            const detailHref = `/vehicles/${getVehicleSlug(vehicle)}`;
-
-            return (
-              <div key={vehicle.id} className="card">
-                <div className={styles.imageWrapper}>
-                  <Image src={vehicle.images[0]} alt={`${vehicle.year} ${vehicle.make} ${vehicle.model}`} width={600} height={600} unoptimized />
-                  <div className={styles.timerOverlay}>
-                    <AuctionCountdown
-                      auctionStart={vehicle.auctionStart.toISOString()}
-                      auctionEnd={vehicle.auctionEnd.toISOString()}
-                      finalBid={currentBid}
-                    />
-                  </div>
-                </div>
-                <p>
-                  <Link href={detailHref} className="stretched-link">
-                    {vehicle.year} {vehicle.make} {vehicle.model} {vehicle.trim}
-                  </Link>
-                </p>
-                <p>{vehicle.city}, {vehicle.province}</p>
-                {hasEnded ? (
-                  <p>
-                    Final Bid:{" "}
-                    {currentBid === null ? "No bids placed" : formatCurrency(currentBid)}
-                  </p>
-                ) : (
-                  <>
-                    <p>
-                      Current Bid:{" "}
-                      {currentBid === null ? "No bids yet" : formatCurrency(currentBid)}
-                    </p>
-                    {/* <p>Starting Bid: {formatCurrency(vehicle.starting_bid)}</p> */}
-                  </>
-                )}
-                {!hasEnded && (
-                  <Link href={detailHref} className="btn">Bid Now</Link>
-                )}
-              </div>
-            );
-          })}
+          {pageVehicles.map((vehicle) => (
+            <VehicleCard key={vehicle.id} vehicle={vehicle} />
+          ))}
         </div>
 
         {pageVehicles.length === 0 && (

@@ -1,15 +1,9 @@
 import Image from "next/image";
-import Link from "next/link";
 import { notFound } from "next/navigation";
 import { AuctionCountdown } from "@/components/AuctionCountdown";
+import { VehicleCard } from "@/components/VehicleCard";
 import { formatCurrency } from "@/lib/format";
-import {
-  getAuctionStatus,
-  getEffectiveBidInfo,
-  getRelatedVehicles,
-  getVehicleBySlug,
-  getVehicleSlug,
-} from "@/lib/vehicles";
+import { getAuctionStatus, getEffectiveBidInfo, getRelatedVehicles, getVehicleBySlug } from "@/lib/vehicles";
 import styles from "./page.module.css";
 
 const RELATED_COUNT = 4;
@@ -214,31 +208,7 @@ export default async function VehicleDetailPage(props: PageProps<"/vehicles/[slu
             <h2 className={styles.relatedHeading}>Related Auctions</h2>
             <div className={styles.relatedGrid}>
               {relatedVehicles.map((related) => (
-                <Link
-                  key={related.id}
-                  href={`/vehicles/${getVehicleSlug(related)}`}
-                  className={styles.relatedCard}
-                >
-                  <div className={styles.relatedImageWrapper}>
-                    <Image
-                      src={related.images[0]}
-                      alt={`${related.year} ${related.make} ${related.model}`}
-                      width={200}
-                      height={150}
-                      unoptimized
-                      className={styles.relatedImage}
-                    />
-                    <div className={styles.relatedBadge}>
-                      <AuctionCountdown
-                        auctionStart={related.auctionStart.toISOString()}
-                        auctionEnd={related.auctionEnd.toISOString()}
-                      />
-                    </div>
-                  </div>
-                  <p className={styles.relatedTitle}>
-                    {related.year} {related.make} {related.model}
-                  </p>
-                </Link>
+                <VehicleCard key={related.id} vehicle={related} />
               ))}
             </div>
           </div>

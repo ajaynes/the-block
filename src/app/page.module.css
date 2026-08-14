@@ -23,16 +23,6 @@
   gap: var(--space-5);
 }
 
-.imageWrapper {
-  position: relative;
-}
-
-.timerOverlay {
-  position: absolute;
-  left: var(--space-3);
-  bottom: var(--space-3);
-}
-
 .pagination {
   display: flex;
   align-items: center;
