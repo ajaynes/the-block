@@ -6,6 +6,7 @@ import { formatCurrency } from "@/lib/format";
 import {
   filterVehicles,
   getAuctionStatus,
+  getEffectiveBidInfo,
   getFilterOptionCounts,
   getVehicleSlug,
   sortVehicles,
@@ -98,6 +99,7 @@ export default async function Home(props: PageProps<"/">) {
         <div className={styles.page}>
           {pageVehicles.map((vehicle) => {
             const hasEnded = getAuctionStatus(vehicle) === "ended";
+            const { currentBid } = getEffectiveBidInfo(vehicle);
 
             const detailHref = `/vehicles/${getVehicleSlug(vehicle)}`;
 
@@ -109,7 +111,7 @@ export default async function Home(props: PageProps<"/">) {
                     <AuctionCountdown
                       auctionStart={vehicle.auctionStart.toISOString()}
                       auctionEnd={vehicle.auctionEnd.toISOString()}
-                      finalBid={vehicle.current_bid}
+                      finalBid={currentBid}
                     />
                   </div>
                 </div>
@@ -122,13 +124,13 @@ export default async function Home(props: PageProps<"/">) {
                 {hasEnded ? (
                   <p>
                     Final Bid:{" "}
-                    {vehicle.current_bid === null ? "No bids placed" : formatCurrency(vehicle.current_bid)}
+                    {currentBid === null ? "No bids placed" : formatCurrency(currentBid)}
                   </p>
                 ) : (
                   <>
                     <p>
                       Current Bid:{" "}
-                      {vehicle.current_bid === null ? "No bids yet" : formatCurrency(vehicle.current_bid)}
+                      {currentBid === null ? "No bids yet" : formatCurrency(currentBid)}
                     </p>
                     {/* <p>Starting Bid: {formatCurrency(vehicle.starting_bid)}</p> */}
                   </>

@@ -10,7 +10,7 @@
 }
 
 .detail {
-  font-size: var(--font-size-2xl);
+  font-size: var(--font-size-xl);
   font-weight: 700;
   color: var(--color-text);
 }
