@@ -110,13 +110,8 @@ export type BidInfo = {
   bidCount: number;
 };
 
-// The dataset's current_bid/bid_count are static snapshots that don't know
-// about our normalized auction window (see normalizeVehicles above) — a
-// vehicle can land on "upcoming" status while still carrying bid data from
-// the original dataset, which is impossible (no auction, no bids yet). This
-// is the single place that resolves the two against each other; every
-// display or sort that touches bid data should read through it rather than
-// vehicle.current_bid/bid_count directly.
+// Normalizes raw bid data against auction status (e.g., clears bids on "upcoming" items).
+// Always read bid metrics through this getter, never `vehicle.current_bid` directly.
 export function getEffectiveBidInfo(vehicle: Vehicle, now: Date = new Date()): BidInfo {
   if (getAuctionStatus(vehicle, now) === "upcoming") {
     return { currentBid: null, bidCount: 0 };
@@ -146,7 +141,28 @@ export type VehicleFilters = {
   bodyStyle?: string[];
   year?: string[];
   auctionStatus?: string[];
+  search?: string;
 };
+
+function matchesSearch(vehicle: Vehicle, search: string): boolean {
+  const haystack = `${vehicle.year} ${vehicle.make} ${vehicle.model} ${vehicle.trim} ${vehicle.vin}`.toLowerCase();
+  return haystack.includes(search.toLowerCase().trim());
+}
+
+// Ranks make/model prefix matches (e.g., "hon" -> Honda) over secondary
+// matches like trim to keep top autocomplete guesses relevant.
+function searchRank(vehicle: Vehicle, search: string): number {
+  const lower = search.toLowerCase().trim();
+  return vehicle.make.toLowerCase().startsWith(lower) || vehicle.model.toLowerCase().startsWith(lower) ? 0 : 1;
+}
+
+export function searchVehicles(search: string, limit: number): Vehicle[] {
+  if (!search.trim()) return [];
+  return vehicles
+    .filter((vehicle) => matchesSearch(vehicle, search))
+    .sort((a, b) => searchRank(a, search) - searchRank(b, search))
+    .slice(0, limit);
+}
 
 export function filterVehicles(list: Vehicle[], filters: VehicleFilters): Vehicle[] {
   const now = new Date();
@@ -158,6 +174,7 @@ export function filterVehicles(list: Vehicle[], filters: VehicleFilters): Vehicl
     if (filters.auctionStatus?.length && !filters.auctionStatus.includes(getAuctionStatus(vehicle, now))) {
       return false;
     }
+    if (filters.search?.trim() && !matchesSearch(vehicle, filters.search)) return false;
     return true;
   });
 }
@@ -185,9 +202,7 @@ export type FilterOptionCounts = {
   years: FilterOptionCount[];
 };
 
-// Counts show a hypothetical intersection with OTHER filter groups, but
-// a union within the SAME group. E.g., the "sedan" count applies active
-// makes, but selecting a make doesn't filter out other option counts in Make.
+// Standard facet counts: AND between groups, OR within the same group.
 export function getFilterOptionCounts(filters: VehicleFilters): FilterOptionCounts {
   const options = getFilterOptions();
 
@@ -219,9 +234,7 @@ const STATUS_PRIORITY: Record<AuctionStatus, number> = {
   ended: 2,
 };
 
-// "Ending soonest" prioritizes active buyers: live auctions closing first,
-// followed by upcoming auctions starting next, with ended auctions pushed
-// to the absolute bottom.
+// Sorts live first, then upcoming, with ended auctions at the bottom.
 function compareEndingSoonest(a: Vehicle, b: Vehicle, now: Date): number {
   const statusA = getAuctionStatus(a, now);
   const statusB = getAuctionStatus(b, now);
@@ -238,10 +251,8 @@ function compareEndingSoonest(a: Vehicle, b: Vehicle, now: Date): number {
   return a.auctionEnd.getTime() - b.auctionEnd.getTime();
 }
 
-// Vehicles with no bids yet (current_bid: null, including any upcoming
-// auction — see getEffectiveBidInfo) sort as the lowest price — first in
-// low-to-high, last in high-to-low — rather than being excluded or treated
-// as $0, which could tie with an actual $0 bid.
+// Vehicles without bids (null) sort lowest in price—first in low-to-high,
+// last in high-to-low—to avoid grouping them with actual $0 bids.
 function priceValue(vehicle: Vehicle, now: Date): number {
   return getEffectiveBidInfo(vehicle, now).currentBid ?? -Infinity;
 }
