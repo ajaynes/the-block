@@ -1,0 +1,45 @@
+.gallery :global(.slick-slide) {
+  outline: none;
+}
+
+/* The main slider defaults to infinite mode, which clones the neighboring
+   slides for seamless looping. Rounding the image itself let a sliver of
+   the adjacent clone show through the cut-off corners — rounding the
+   slider's own clipping viewport instead avoids that entirely. */
+.gallery :global(.slick-list) {
+  border-radius: var(--radius-md);
+  overflow: hidden;
+}
+
+.mainImage {
+  width: 100%;
+  height: auto;
+}
+
+.thumbs {
+  margin-top: var(--space-3);
+}
+
+.thumbSlide {
+  padding: 0 var(--space-1);
+  cursor: pointer;
+}
+
+.thumbImage {
+  width: 100%;
+  height: auto;
+  border-radius: var(--radius-sm);
+  border: 2px solid transparent;
+  opacity: 0.7;
+  transition: border-color 0.15s ease, opacity 0.15s ease;
+}
+
+/* react-slick applies `.slick-current` to the active slide itself via its
+   own internal (non-React) DOM updates for `focusOnSelect` — mirroring that
+   here instead of tracking the index in React state, since a state-driven
+   class on our own node can desync from which physical DOM node slick just
+   moved/reused. */
+.thumbs :global(.slick-current) .thumbImage {
+  border-color: var(--color-accent);
+  opacity: 1;
+}
