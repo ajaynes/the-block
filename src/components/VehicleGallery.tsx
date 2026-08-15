@@ -1,0 +1,65 @@
+"use client";
+
+import Image from "next/image";
+import { useState } from "react";
+import Slider from "react-slick";
+import styles from "./VehicleGallery.module.css";
+
+type Props = {
+  images: string[];
+  alt: string;
+};
+
+export function VehicleGallery({ images, alt }: Props) {
+  const [mainSlider, setMainSlider] = useState<Slider | null>(null);
+  const [thumbSlider, setThumbSlider] = useState<Slider | null>(null);
+
+  const thumbsToShow = Math.min(images.length, 5);
+
+  return (
+    <div className={styles.gallery}>
+      <Slider asNavFor={thumbSlider ?? undefined} ref={setMainSlider} arrows={false} dots={false}>
+        {images.map((src, index) => (
+          <div key={src}>
+            <Image
+              src={src}
+              alt={`${alt} photo ${index + 1}`}
+              width={800}
+              height={600}
+              unoptimized
+              priority={index === 0}
+              className={styles.mainImage}
+            />
+          </div>
+        ))}
+      </Slider>
+
+      <Slider
+        asNavFor={mainSlider ?? undefined}
+        ref={setThumbSlider}
+        slidesToShow={thumbsToShow}
+        slidesToScroll={1}
+        swipeToSlide
+        focusOnSelect
+        infinite={false}
+        className={styles.thumbs}
+        responsive={[
+          { breakpoint: 800, settings: { slidesToShow: Math.min(images.length, 3) } },
+        ]}
+      >
+        {images.map((src, index) => (
+          <div key={src} className={styles.thumbSlide}>
+            <Image
+              src={src}
+              alt=""
+              width={160}
+              height={120}
+              unoptimized
+              className={styles.thumbImage}
+            />
+          </div>
+        ))}
+      </Slider>
+    </div>
+  );
+}

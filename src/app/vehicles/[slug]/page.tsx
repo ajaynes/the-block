@@ -1,7 +1,10 @@
-import Image from "next/image";
 import { notFound } from "next/navigation";
+// Import css files
+import "slick-carousel/slick/slick.css";
+import "slick-carousel/slick/slick-theme.css";
 import { AuctionCountdown } from "@/components/AuctionCountdown";
 import { VehicleCard } from "@/components/VehicleCard";
+import { VehicleGallery } from "@/components/VehicleGallery";
 import { formatCurrency } from "@/lib/format";
 import { getAuctionStatus, getEffectiveBidInfo, getRelatedVehicles, getVehicleBySlug } from "@/lib/vehicles";
 import styles from "./page.module.css";
@@ -28,19 +31,7 @@ export default async function VehicleDetailPage(props: PageProps<"/vehicles/[slu
         <h1 className={`show-mobile ${styles.mobiletitle}`}>
           {vehicle.year} {vehicle.make} {vehicle.model}
         </h1>
-        <div className={styles.gallery}>
-          {vehicle.images.map((src, index) => (
-            <Image
-              key={src}
-              src={src}
-              alt={`${vehicle.year} ${vehicle.make} ${vehicle.model} photo ${index + 1}`}
-              width={280}
-              height={210}
-              unoptimized
-              className={styles.galleryImage}
-            />
-          ))}
-        </div>
+        <VehicleGallery images={vehicle.images} alt={`${vehicle.year} ${vehicle.make} ${vehicle.model}`} />
 
         <table className={styles.specsTable}>
           <thead>
