@@ -126,36 +126,6 @@
   margin-bottom: var(--space-3);
 }
 
-.bidRow {
-  display: flex;
-  flex-wrap: wrap;
-  gap: var(--space-2);
-  margin-top: var(--space-4);
-}
-
-.bidRow input {
-  flex: 1 1 160px;
-  min-width: 0;
-  max-width: 100%;
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-md);
-  padding: var(--space-3);
-  font-size: var(--font-size-base);
-  background: var(--color-surface);
-  color: var(--color-text);
-  /* Native number-input spinners render at inconsistent, sometimes wide
-     widths across mobile browsers, which can push this row past the
-     viewport — remove them since they're unstyled anyway. */
-  -moz-appearance: textfield;
-  appearance: textfield;
-}
-
-.bidRow input::-webkit-outer-spin-button,
-.bidRow input::-webkit-inner-spin-button {
-  -webkit-appearance: none;
-  margin: 0;
-}
-
 .bidNotice {
   margin-top: var(--space-4);
   color: var(--color-text-muted);

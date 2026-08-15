@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import "slick-carousel/slick/slick.css";
 import "slick-carousel/slick/slick-theme.css";
 import { AuctionCountdown } from "@/components/AuctionCountdown";
+import { LiveBidBox } from "@/components/LiveBidBox";
 import { VehicleCard } from "@/components/VehicleCard";
 import { VehicleGallery } from "@/components/VehicleGallery";
 import { formatCurrency } from "@/lib/format";
@@ -97,54 +98,53 @@ export default async function VehicleDetailPage(props: PageProps<"/vehicles/[slu
           {vehicle.year} {vehicle.make} {vehicle.model}
         </h1>
         <div className={`card ${styles.bidBox}`}>
-          {hasEnded ? (
-            <p className={styles.currentBid}>
-              Final Bid:{" "}
-              {currentBid === null ? "No bids placed" : formatCurrency(currentBid)}
-            </p>
+          {isLive ? (
+            <LiveBidBox
+              vehicleId={vehicle.id}
+              startingBid={vehicle.starting_bid}
+              initialCurrentBid={vehicle.current_bid}
+              initialBidCount={vehicle.bid_count}
+              auctionStart={vehicle.auctionStart.toISOString()}
+              auctionEnd={vehicle.auctionEnd.toISOString()}
+              buyNowPrice={vehicle.buy_now_price}
+            />
           ) : (
             <>
-              <p className={styles.currentBid}>
-                Current Bid:{" "}
-                {currentBid === null ? "No bids yet" : formatCurrency(currentBid)}
-              </p>
-              <p className={styles.bidCount}>
-                {bidCount} {bidCount === 1 ? "bid" : "bids"}
-              </p>
-            </>
-          )}
+              {hasEnded ? (
+                <p className={styles.currentBid}>
+                  Final Bid:{" "}
+                  {currentBid === null ? "No bids placed" : formatCurrency(currentBid)}
+                </p>
+              ) : (
+                <>
+                  <p className={styles.currentBid}>
+                    Current Bid:{" "}
+                    {currentBid === null ? "No bids yet" : formatCurrency(currentBid)}
+                  </p>
+                  <p className={styles.bidCount}>
+                    {bidCount} {bidCount === 1 ? "bid" : "bids"}
+                  </p>
+                </>
+              )}
 
-          <AuctionCountdown
-            auctionStart={vehicle.auctionStart.toISOString()}
-            auctionEnd={vehicle.auctionEnd.toISOString()}
-            finalBid={currentBid}
-            variant="detail"
-          />
-
-          {isLive && (
-            <div className={styles.bidRow}>
-              <input
-                type="number"
-                min={(currentBid ?? vehicle.starting_bid) + 1}
-                step={1}
-                placeholder={`${formatCurrency((currentBid ?? vehicle.starting_bid) + 1)} or more`}
-                aria-label="Bid amount"
+              <AuctionCountdown
+                auctionStart={vehicle.auctionStart.toISOString()}
+                auctionEnd={vehicle.auctionEnd.toISOString()}
+                finalBid={currentBid}
+                variant="detail"
               />
-              <button type="button" className="btn btn-primary">
-                Place Bid
-              </button>
-            </div>
-          )}
 
-          {status === "upcoming" && (
-            <p className={styles.bidNotice}>Bidding opens when the auction starts.</p>
-          )}
+              {status === "upcoming" && (
+                <p className={styles.bidNotice}>Bidding opens when the auction starts.</p>
+              )}
 
-          {!hasEnded && (
-            <p className={styles.bidMeta}>
-              Starting Bid: {formatCurrency(vehicle.starting_bid)}
-              {vehicle.buy_now_price !== null && <> · Buy Now: {formatCurrency(vehicle.buy_now_price)}</>}
-            </p>
+              {!hasEnded && (
+                <p className={styles.bidMeta}>
+                  Starting Bid: {formatCurrency(vehicle.starting_bid)}
+                  {vehicle.buy_now_price !== null && <> · Buy Now: {formatCurrency(vehicle.buy_now_price)}</>}
+                </p>
+              )}
+            </>
           )}
         </div>
         <table className={styles.specsTable}>
