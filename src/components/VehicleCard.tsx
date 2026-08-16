@@ -6,7 +6,15 @@ import { formatCurrency } from "@/lib/format";
 import { getAuctionStatus, getEffectiveBidInfo, getVehicleSlug, type Vehicle } from "@/lib/vehicles";
 import styles from "./VehicleCard.module.css";
 
-export function VehicleCard({ vehicle }: { vehicle: Vehicle }) {
+type Props = {
+  vehicle: Vehicle;
+  /** Stacks the action buttons vertically on desktop — for narrower grids
+   *  (e.g. the PDP's related-auctions rail) where side-by-side buttons
+   *  don't have enough room to breathe. */
+  stackActions?: boolean;
+};
+
+export function VehicleCard({ vehicle, stackActions }: Props) {
   const status = getAuctionStatus(vehicle);
   const hasEnded = status === "ended";
   const isUpcoming = status === "upcoming";
@@ -38,10 +46,10 @@ export function VehicleCard({ vehicle }: { vehicle: Vehicle }) {
         </Link>
       </p>
       <p>
-        {vehicle.city}, {vehicle.province}
+        <span className="text-label">Odometer: {vehicle.odometer_km.toLocaleString('en-CA')}</span>
       </p>
       {hasEnded ? (
-        <p>Final Bid: {currentBid === null ? "No bids placed" : formatCurrency(currentBid)}</p>
+        <p><span className="text-label">Final Bid:</span> <strong>{currentBid === null ? "No bids placed" : formatCurrency(currentBid)}</strong></p>
       ) : (
         !isUpcoming && (
           <p>
@@ -50,14 +58,24 @@ export function VehicleCard({ vehicle }: { vehicle: Vehicle }) {
           </p>
         )
       )}
-      {!hasEnded && (
-        <div className={styles.actions}>
-          <Link href={detailHref} className={`btn btn-primary ${styles.actionButton}`}>
-            Bid Now
+      <div className={`${styles.actions} ${stackActions ? styles.actionsStacked : ""}`}>
+        {hasEnded ? (
+          <Link
+            href={detailHref}
+            className={`btn btn-primary ${styles.actionButton} ${styles.viewDetailsButton}`}
+            style={{ width: "100%" }}
+          >
+            View Details
           </Link>
-          <WatchlistButton vehicleId={vehicle.id} className={styles.actionButton} />
-        </div>
-      )}
+        ) : (
+          <>
+            <Link href={detailHref} className={`btn btn-primary ${styles.actionButton}`}>
+              Bid Now
+            </Link>
+            <WatchlistButton vehicleId={vehicle.id} className={styles.actionButton} />
+          </>
+        )}
+      </div>
       </div>
     </div>
   );

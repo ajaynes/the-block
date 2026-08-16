@@ -1,5 +1,4 @@
 import { notFound } from "next/navigation";
-// Import css files
 import "slick-carousel/slick/slick.css";
 import "slick-carousel/slick/slick-theme.css";
 import { AuctionCountdown } from "@/components/AuctionCountdown";
@@ -97,6 +96,50 @@ export default async function VehicleDetailPage(props: PageProps<"/vehicles/[slu
         <h1 className={`hide-mobile ${styles.title}`}>
           {vehicle.year} {vehicle.make} {vehicle.model}
         </h1>
+        <table className={styles.specsTable}>
+          <thead>
+            <tr>
+              <th colSpan={2}>Sales Information</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <th scope="row">Sales Location</th>
+              <td>{vehicle.city}, {vehicle.province}</td>
+            </tr>
+            <tr>
+              <th scope="row">Seller</th>
+              <td>{vehicle.selling_dealership}</td>
+            </tr>
+            <tr>
+              <th scope="row">Lot</th>
+              <td>{vehicle.lot}</td>
+            </tr>
+            <tr>
+              <th scope="row">Title Status</th>
+              <td>{vehicle.title_status}</td>
+            </tr>
+            <tr>
+              <th scope="row">Damage Notes</th>
+              <td>
+                {vehicle.damage_notes.length > 0 ? (
+                  <details>
+                    <summary className={styles.damageSummary}>
+                      {vehicle.damage_notes.length} {vehicle.damage_notes.length === 1 ? "item" : "items"}
+                    </summary>
+                    <ul className={styles.damageList}>
+                      {vehicle.damage_notes.map((note) => (
+                        <li key={note}>{note}</li>
+                      ))}
+                    </ul>
+                  </details>
+                ) : (
+                  <span className={styles.noDamage}>None reported</span>
+                )}
+              </td>
+            </tr>
+          </tbody>
+        </table>
         <div className={`card ${styles.bidBox}`}>
           {isLive ? (
             <LiveBidBox
@@ -147,50 +190,6 @@ export default async function VehicleDetailPage(props: PageProps<"/vehicles/[slu
             </>
           )}
         </div>
-        <table className={styles.specsTable}>
-          <thead>
-            <tr>
-              <th colSpan={2}>Sales Information</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr>
-              <th scope="row">Sales Location</th>
-              <td>{vehicle.city}, {vehicle.province}</td>
-            </tr>
-            <tr>
-              <th scope="row">Seller</th>
-              <td>{vehicle.selling_dealership}</td>
-            </tr>
-            <tr>
-              <th scope="row">Lot</th>
-              <td>{vehicle.lot}</td>
-            </tr>
-            <tr>
-              <th scope="row">Title Status</th>
-              <td>{vehicle.title_status}</td>
-            </tr>
-            <tr>
-              <th scope="row">Damage Notes</th>
-              <td>
-                {vehicle.damage_notes.length > 0 ? (
-                  <details>
-                    <summary className={styles.damageSummary}>
-                      {vehicle.damage_notes.length} {vehicle.damage_notes.length === 1 ? "item" : "items"}
-                    </summary>
-                    <ul className={styles.damageList}>
-                      {vehicle.damage_notes.map((note) => (
-                        <li key={note}>{note}</li>
-                      ))}
-                    </ul>
-                  </details>
-                ) : (
-                  <span className={styles.noDamage}>None reported</span>
-                )}
-              </td>
-            </tr>
-          </tbody>
-        </table>
 
 
 
@@ -199,7 +198,7 @@ export default async function VehicleDetailPage(props: PageProps<"/vehicles/[slu
             <h2 className={styles.relatedHeading}>Related Auctions</h2>
             <div className={styles.relatedGrid}>
               {relatedVehicles.map((related) => (
-                <VehicleCard key={related.id} vehicle={related} />
+                <VehicleCard key={related.id} vehicle={related} stackActions />
               ))}
             </div>
           </div>

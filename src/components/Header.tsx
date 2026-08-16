@@ -152,7 +152,7 @@ export function Header() {
     <header className={styles.header}>
       <div className={styles.inner}>
         <Link href="/" className={styles.logo}>
-          The Block
+          <Image src="/logo.svg" alt="The Block" width={175} height={24} priority />
         </Link>
 
         <div className={styles.search} ref={searchRef}>

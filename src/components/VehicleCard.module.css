@@ -39,3 +39,25 @@
   text-align: center;
   margin-top: var(--space-2);
 }
+
+/* Standalone in .actions (ended cards), View Details doesn't get stretched to
+   match a sibling's icon-driven height like Bid Now/Watchlist do, so it needs
+   ~8px of extra vertical padding to land at the same height. */
+.viewDetailsButton {
+  padding-top: calc(var(--space-3) + 4px);
+  padding-bottom: calc(var(--space-3) + 4px);
+}
+
+/* Desktop-only: narrower grids (the related-auctions rail) don't have room
+   for two 47%-wide buttons side by side, so stack them instead. Left as the
+   normal side-by-side row below 800px, where a single-column layout gives
+   the card its full width back. */
+@media (min-width: 801px) {
+  .actionsStacked {
+    flex-direction: column;
+  }
+
+  .actionsStacked .actionButton {
+    width: 100%;
+  }
+}

@@ -7,7 +7,7 @@
    the adjacent clone show through the cut-off corners — rounding the
    slider's own clipping viewport instead avoids that entirely. */
 .gallery :global(.slick-list) {
-  border-radius: var(--radius-md);
+  border-radius: var(--radius);
   overflow: hidden;
 }
 
@@ -28,7 +28,7 @@
 .thumbImage {
   width: 100%;
   height: auto;
-  border-radius: var(--radius-sm);
+  border-radius: var(--radius);
   border: 2px solid transparent;
   opacity: 0.7;
   transition: border-color 0.15s ease, opacity 0.15s ease;
