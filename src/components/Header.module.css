@@ -60,6 +60,8 @@
   padding: var(--space-2) var(--space-3);
   background: var(--color-surface);
   cursor: pointer;
+  display: flex;
+  align-items: center;
 }
 
 .suggestions {

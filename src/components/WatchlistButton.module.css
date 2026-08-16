@@ -1,4 +1,10 @@
-.button[data-watched="true"] {
+.button[data-watched="false"] {
   border-color: var(--color-accent);
+  background-color: transparent;
   color: var(--color-accent);
+}
+.button[data-watched="true"],
+.button[data-watched="false"]:hover {
+  color: var(--color-surface);
+   background-color: var( --color-accent-hover);
 }

@@ -1,5 +1,11 @@
+.card {
+  display: flex;
+  flex-direction: column;
+}
+
 .imageWrapper {
   position: relative;
+  flex-shrink: 0;
 }
 
 .timerOverlay {
@@ -8,13 +14,28 @@
   bottom: var(--space-3);
 }
 
+.body {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  padding: 15px;
+}
+
 .actions {
   display: flex;
   flex-wrap: wrap;
   gap: var(--space-2);
+  justify-content: space-between;
+  /* Pushes the action row to the bottom of the card regardless of how much
+     space the title/location/bid text above it takes up, so buttons land
+     on the same line across every card in a grid row (grid items stretch
+     to the row's tallest card by default, leaving this space to fill). */
+  margin-top: auto;
+  padding-top: var(--space-3);
 }
 
 .actionButton {
-  flex: 1 1 120px;
+  width: 47%;
   text-align: center;
+  margin-top: var(--space-2);
 }

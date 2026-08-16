@@ -16,7 +16,7 @@
 }
 
 .live {
-  color: var(--color-accent);
+  color: var(--color-info);
 }
 
 .ended {
