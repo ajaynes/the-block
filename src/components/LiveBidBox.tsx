@@ -171,11 +171,6 @@ export function LiveBidBox({
         {state.bidCount} {state.bidCount === 1 ? "bid" : "bids"}
       </p>
 
-      {hasUserBid && (
-        <p className={state.highestBidderIsUser ? styles.winning : styles.outbid} aria-live="polite">
-          {state.highestBidderIsUser ? "You're winning" : "You've been outbid"}
-        </p>
-      )}
 
       <AuctionCountdown
         auctionStart={auctionStart}
@@ -236,6 +231,12 @@ export function LiveBidBox({
       {error && (
         <p className={styles.error} role="alert">
           {error}
+        </p>
+      )}
+
+      {hasUserBid && (
+        <p className={state.highestBidderIsUser ? styles.winning : styles.outbid} aria-live="polite">
+          {state.highestBidderIsUser ? "You're winning" : "You've been outbid"}
         </p>
       )}
 

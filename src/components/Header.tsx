@@ -2,6 +2,7 @@
 
 import Image from "next/image";
 import Link from "next/link";
+import { LiaSearchSolid } from "react-icons/lia";
 import { useRouter, useSearchParams } from "next/navigation";
 import {
   useEffect,
@@ -151,7 +152,7 @@ export function Header() {
     <header className={styles.header}>
       <div className={styles.inner}>
         <Link href="/" className={styles.logo}>
-          The Block
+          <Image src="/logo.svg" alt="The Block" width={175} height={24} priority />
         </Link>
 
         <div className={styles.search} ref={searchRef}>
@@ -174,7 +175,7 @@ export function Header() {
               aria-activedescendant={highlightedIndex >= 0 ? `search-option-${highlightedIndex}` : undefined}
             />
             <button type="submit" className={styles.searchButton} aria-label="Search">
-              🔍
+              <LiaSearchSolid style={{ width: 26, height: 26}} />
             </button>
           </form>
 

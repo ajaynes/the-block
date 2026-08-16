@@ -1,5 +1,11 @@
+.card {
+  display: flex;
+  flex-direction: column;
+}
+
 .imageWrapper {
   position: relative;
+  flex-shrink: 0;
 }
 
 .timerOverlay {
@@ -8,13 +14,50 @@
   bottom: var(--space-3);
 }
 
+.body {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  padding: 15px;
+}
+
 .actions {
   display: flex;
   flex-wrap: wrap;
   gap: var(--space-2);
+  justify-content: space-between;
+  /* Pushes the action row to the bottom of the card regardless of how much
+     space the title/location/bid text above it takes up, so buttons land
+     on the same line across every card in a grid row (grid items stretch
+     to the row's tallest card by default, leaving this space to fill). */
+  margin-top: auto;
+  padding-top: var(--space-3);
 }
 
 .actionButton {
-  flex: 1 1 120px;
+  width: 47%;
   text-align: center;
+  margin-top: var(--space-2);
+}
+
+/* Standalone in .actions (ended cards), View Details doesn't get stretched to
+   match a sibling's icon-driven height like Bid Now/Watchlist do, so it needs
+   ~8px of extra vertical padding to land at the same height. */
+.viewDetailsButton {
+  padding-top: calc(var(--space-3) + 4px);
+  padding-bottom: calc(var(--space-3) + 4px);
+}
+
+/* Desktop-only: narrower grids (the related-auctions rail) don't have room
+   for two 47%-wide buttons side by side, so stack them instead. Left as the
+   normal side-by-side row below 800px, where a single-column layout gives
+   the card its full width back. */
+@media (min-width: 801px) {
+  .actionsStacked {
+    flex-direction: column;
+  }
+
+  .actionsStacked .actionButton {
+    width: 100%;
+  }
 }
