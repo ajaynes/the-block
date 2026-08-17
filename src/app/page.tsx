@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import { FilterBar, type FilterGroupKey } from "@/components/FilterBar";
 import { VehicleCard } from "@/components/VehicleCard";
@@ -9,6 +10,12 @@ import {
   type SortOption,
 } from "@/lib/vehicles";
 import styles from "./page.module.css";
+
+export const metadata: Metadata = {
+  title: "Shop Vehicle Auctions",
+  description:
+    "Search and filter live, upcoming, and ended vehicle auctions by make, body style, title status, and year.",
+};
 
 const PAGE_SIZE = 12;
 const SORT_OPTIONS: SortOption[] = ["ending-soonest", "price-low", "price-high", "alphabetical"];
@@ -46,6 +53,8 @@ export default async function Home(props: PageProps<"/">) {
   };
 
   const sort = parseSort(params.sort);
+  // Ending soonest is the default sort when the URL doesn't specify one.
+  const effectiveSort = sort ?? "ending-soonest";
   const search = parseSearch(params.q);
 
   const filteredVehicles = sortVehicles(
@@ -57,7 +66,7 @@ export default async function Home(props: PageProps<"/">) {
       year: selected.year,
       search,
     }),
-    sort,
+    effectiveSort,
   );
 
   const totalPages = Math.max(1, Math.ceil(filteredVehicles.length / PAGE_SIZE));
@@ -107,10 +116,10 @@ export default async function Home(props: PageProps<"/">) {
   })();
 
   return (
-    <div className={styles.layout}>
-      <FilterBar groups={filterGroups} selected={selected} sort={sort ?? ""} />
-
-      <div className={styles.content}>
+    <>
+      <h1 className={styles.pageHeading}>Vehicle Auctions</h1>
+      <div className={styles.layout}>
+      <FilterBar groups={filterGroups} selected={selected} sort={effectiveSort}>
         {search && (
           <p className={styles.searchNotice}>
             Search results for &ldquo;{search}&rdquo; ({filteredVehicles.length}){" "}
@@ -142,7 +151,8 @@ export default async function Home(props: PageProps<"/">) {
             <span className="btn btn-secondary" aria-disabled="true">Next</span>
           )}
         </nav>
+      </FilterBar>
       </div>
-    </div>
+    </>
   );
 }

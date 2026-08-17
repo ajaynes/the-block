@@ -2,9 +2,9 @@
 
 import { useEffect, useReducer, useState, type FormEvent } from "react";
 import { AuctionCountdown } from "@/components/AuctionCountdown";
+import { ConfirmDialog } from "@/components/ConfirmDialog";
 import {
   auctionSimReducer,
-  BID_INCREMENT_OPTIONS,
   loadAuctionState,
   MIN_INCREMENT,
   randomBidder,
@@ -12,7 +12,6 @@ import {
   randomIncrement,
   saveAuctionState,
   type AuctionSimState,
-  type BidIncrement,
 } from "@/lib/auction-simulation";
 import { formatCurrency } from "@/lib/format";
 import styles from "./LiveBidBox.module.css";
@@ -24,10 +23,27 @@ type Props = {
   initialBidCount: number;
   auctionStart: string;
   auctionEnd: string;
-  buyNowPrice: number | null;
 };
 
 const SUBMIT_DELAY_MS = 350;
+
+const BID_DISCLAIMER_KEY = "the-block:bid-disclaimer-acknowledged";
+
+function hasAcknowledgedBidDisclaimer(): boolean {
+  try {
+    return window.localStorage.getItem(BID_DISCLAIMER_KEY) === "true";
+  } catch {
+    return false;
+  }
+}
+
+function acknowledgeBidDisclaimer(): void {
+  try {
+    window.localStorage.setItem(BID_DISCLAIMER_KEY, "true");
+  } catch {
+    // Storage unavailable — the confirmation will just show again next time.
+  }
+}
 
 export function LiveBidBox({
   vehicleId,
@@ -36,7 +52,6 @@ export function LiveBidBox({
   initialBidCount,
   auctionStart,
   auctionEnd,
-  buyNowPrice,
 }: Props) {
   const initialState: AuctionSimState = {
     currentBid: initialCurrentBid ?? startingBid,
@@ -50,11 +65,11 @@ export function LiveBidBox({
   const [hydrated, setHydrated] = useState(false);
   const [nowMs, setNowMs] = useState<number | null>(null);
 
-  const [increment, setIncrement] = useState<BidIncrement>(100);
-  const [bidValue, setBidValue] = useState(initialState.currentBid + increment);
+  const [bidValue, setBidValue] = useState(initialState.currentBid + MIN_INCREMENT);
   const [touched, setTouched] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [showDisclaimer, setShowDisclaimer] = useState(false);
 
   // Restore any persisted auction state after mount — kept out of the
   // initial render so server and client agree on the first paint, then
@@ -98,11 +113,11 @@ export function LiveBidBox({
     return () => clearTimeout(timer);
   }, [hasEnded, state.currentBid]);
 
-  // Keeps the suggested bid amount current (current bid + chosen increment)
-  // until the user starts customizing it, so it doesn't fight their typing.
+  // Keeps the suggested bid amount current (current bid + increment) until
+  // the user starts customizing it, so it doesn't fight their typing.
   useEffect(() => {
-    if (!touched) setBidValue(state.currentBid + increment);
-  }, [state.currentBid, increment, touched]);
+    if (!touched) setBidValue(state.currentBid + MIN_INCREMENT);
+  }, [state.currentBid, touched]);
 
   const minNextBid = state.currentBid + MIN_INCREMENT;
   const isValid = bidValue >= minNextBid;
@@ -111,7 +126,7 @@ export function LiveBidBox({
   function handleStep(direction: 1 | -1) {
     setTouched(true);
     setError(null);
-    setBidValue((prev) => Math.max(minNextBid, prev + direction * increment));
+    setBidValue((prev) => Math.max(minNextBid, prev + direction * MIN_INCREMENT));
   }
 
   function handleInputChange(value: number) {
@@ -126,6 +141,18 @@ export function LiveBidBox({
       setError(`Minimum bid is ${formatCurrency(minNextBid)}`);
       return;
     }
+
+    // Only the first bid a user ever places needs the disclaimer — once
+    // acknowledged, it's persisted so it doesn't nag on every later bid.
+    if (!hasAcknowledgedBidDisclaimer()) {
+      setShowDisclaimer(true);
+      return;
+    }
+
+    submitBid();
+  }
+
+  function submitBid() {
     setSubmitting(true);
     setError(null);
     setTimeout(() => {
@@ -133,6 +160,12 @@ export function LiveBidBox({
       setSubmitting(false);
       setTouched(false);
     }, SUBMIT_DELAY_MS);
+  }
+
+  function handleDisclaimerConfirm() {
+    acknowledgeBidDisclaimer();
+    setShowDisclaimer(false);
+    submitBid();
   }
 
   if (hasEnded) {
@@ -158,11 +191,20 @@ export function LiveBidBox({
   }
 
   return (
-    // noValidate: the browser's native step/min constraint validation would
-    // otherwise gate submission on its own grid (e.g. "nearest valid values
-    // are X and Y"), rejecting any amount that isn't min + N*step. A bid
-    // only needs to clear the minimum increment, not land on that grid —
-    // our own `isValid` check below is the actual rule.
+    <>
+    {showDisclaimer && (
+      <ConfirmDialog
+        title="Confirm Your Bid"
+        message="This bid is real. If you win the auction, you'll be responsible for completing payment."
+        confirmLabel="Confirm"
+        cancelLabel="Cancel"
+        onConfirm={handleDisclaimerConfirm}
+        onCancel={() => setShowDisclaimer(false)}
+      />
+    )}
+    {/* Disables native HTML validation so bids aren't locked to a rigid
+       step grid—only our custom `isValid` minimum check applies.
+    */}
     <form onSubmit={handleSubmit} noValidate>
       <p className={styles.currentBid}>
         Current Bid: {state.bidCount > 0 ? formatCurrency(state.currentBid) : "No bids yet"}
@@ -179,21 +221,7 @@ export function LiveBidBox({
         variant="detail"
       />
 
-      <div className={styles.incrementSelector} role="radiogroup" aria-label="Bid increment">
-        {BID_INCREMENT_OPTIONS.map((option) => (
-          <button
-            key={option}
-            type="button"
-            role="radio"
-            aria-checked={increment === option}
-            data-active={increment === option}
-            className={styles.incrementOption}
-            onClick={() => setIncrement(option)}
-          >
-            +{formatCurrency(option)}
-          </button>
-        ))}
-      </div>
+      <p className={styles.incrementNote}>Bids increase in increments of {formatCurrency(MIN_INCREMENT)}.</p>
 
       <div className={styles.bidRow}>
         <div className={styles.stepperInput}>
@@ -208,14 +236,14 @@ export function LiveBidBox({
           <div className={styles.stepperButtons}>
             <button
               type="button"
-              aria-label={`Increase bid by ${formatCurrency(increment)}`}
+              aria-label={`Increase bid by ${formatCurrency(MIN_INCREMENT)}`}
               onClick={() => handleStep(1)}
             >
               ▲
             </button>
             <button
               type="button"
-              aria-label={`Decrease bid by ${formatCurrency(increment)}`}
+              aria-label={`Decrease bid by ${formatCurrency(MIN_INCREMENT)}`}
               disabled={bidValue <= minNextBid}
               onClick={() => handleStep(-1)}
             >
@@ -234,16 +262,14 @@ export function LiveBidBox({
         </p>
       )}
 
-      {hasUserBid && (
-        <p className={state.highestBidderIsUser ? styles.winning : styles.outbid} aria-live="polite">
-          {state.highestBidderIsUser ? "You're winning" : "You've been outbid"}
-        </p>
-      )}
-
-      <p className={styles.bidMeta}>
-        Starting Bid: {formatCurrency(startingBid)}
-        {buyNowPrice !== null && <> · Buy Now: {formatCurrency(buyNowPrice)}</>}
+      <p
+        className={hasUserBid ? (state.highestBidderIsUser ? styles.winning : styles.outbid) : styles.noBid}
+        aria-live="polite"
+      >
+        {hasUserBid ? (state.highestBidderIsUser ? "You're winning" : "You've been outbid") : "You haven't bid"}
       </p>
+
+      <p className={styles.bidMeta}>Starting Bid: {formatCurrency(startingBid)}</p>
 
       {state.bidHistory.length > 0 && (
         <ul className={styles.bidHistory} aria-live="polite">
@@ -256,5 +282,6 @@ export function LiveBidBox({
         </ul>
       )}
     </form>
+    </>
   );
 }

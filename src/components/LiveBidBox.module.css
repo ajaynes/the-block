@@ -10,7 +10,8 @@
 }
 
 .winning,
-.outbid {
+.outbid,
+.noBid {
   display: inline-block;
   margin-top: var(--space-2);
   padding: var(--space-2) var(--space-3);
@@ -31,28 +32,15 @@
   color: var(--color-danger);
 }
 
-.incrementSelector {
-  display: flex;
-  gap: var(--space-2);
-  margin-top: var(--space-4);
+.noBid {
+  background: var(--color-bg);
+  color: var(--color-text-muted);
 }
 
-.incrementOption {
-  flex: 1 1 0;
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius);
-  padding: var(--space-2) var(--space-3);
-  background: var(--color-surface);
+.incrementNote {
+  margin-top: var(--space-4);
   color: var(--color-text-muted);
   font-size: var(--font-size-sm);
-  font-weight: 600;
-  cursor: pointer;
-}
-
-.incrementOption[data-active="true"] {
-  border-color: var(--color-accent);
-  color: var(--color-accent);
-  background: color-mix(in srgb, var(--color-accent) 10%, transparent);
 }
 
 .bidRow {
@@ -84,9 +72,7 @@
   appearance: textfield;
 }
 
-/* Native number-input spinners render inconsistently across browsers — the
-   stepper buttons below replace them with a controllable, styled version
-   that steps by the user's chosen increment instead of a fixed step of 1. */
+/* Hides browser spinners to use custom, dynamic-step controls. */
 .stepperInput input::-webkit-outer-spin-button,
 .stepperInput input::-webkit-inner-spin-button {
   -webkit-appearance: none;

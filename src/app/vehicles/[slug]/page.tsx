@@ -1,7 +1,10 @@
+import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import "slick-carousel/slick/slick.css";
 import "slick-carousel/slick/slick-theme.css";
 import { AuctionCountdown } from "@/components/AuctionCountdown";
+import { Breadcrumbs } from "@/components/Breadcrumbs";
+import { BuyNowPanel } from "@/components/BuyNowPanel";
 import { LiveBidBox } from "@/components/LiveBidBox";
 import { VehicleCard } from "@/components/VehicleCard";
 import { VehicleGallery } from "@/components/VehicleGallery";
@@ -10,6 +13,40 @@ import { getAuctionStatus, getEffectiveBidInfo, getRelatedVehicles, getVehicleBy
 import styles from "./page.module.css";
 
 const RELATED_COUNT = 4;
+
+export async function generateMetadata(props: PageProps<"/vehicles/[slug]">): Promise<Metadata> {
+  const { slug } = await props.params;
+  const vehicle = getVehicleBySlug(slug);
+
+  if (!vehicle) {
+    return { title: "Vehicle Not Found" };
+  }
+
+  const status = getAuctionStatus(vehicle);
+  const { currentBid, bidCount } = getEffectiveBidInfo(vehicle);
+  const title = `${vehicle.year} ${vehicle.make} ${vehicle.model} ${vehicle.trim}`;
+
+  const priceText =
+    status === "ended"
+      ? currentBid !== null
+        ? `Sold for ${formatCurrency(currentBid)}`
+        : "Auction ended with no bids placed"
+      : currentBid !== null
+        ? `Current bid ${formatCurrency(currentBid)} (${bidCount} ${bidCount === 1 ? "bid" : "bids"})`
+        : `Starting bid ${formatCurrency(vehicle.starting_bid)}`;
+
+  const description = `${title} in ${vehicle.city}, ${vehicle.province} — ${priceText}. ${vehicle.odometer_km.toLocaleString()} km, ${vehicle.title_status} title.`;
+
+  return {
+    title,
+    description,
+    openGraph: {
+      title,
+      description,
+      images: vehicle.images[0] ? [vehicle.images[0]] : undefined,
+    },
+  };
+}
 
 export default async function VehicleDetailPage(props: PageProps<"/vehicles/[slug]">) {
   const { slug } = await props.params;
@@ -26,11 +63,19 @@ export default async function VehicleDetailPage(props: PageProps<"/vehicles/[slu
   const relatedVehicles = getRelatedVehicles(vehicle, RELATED_COUNT);
 
   return (
-    <main className={styles.layout}>
+    <>
+      <Breadcrumbs
+        items={[
+          { label: "Home", href: "/" },
+          { label: vehicle.make, href: `/?make=${encodeURIComponent(vehicle.make)}` },
+          { label: `${vehicle.year} ${vehicle.make} ${vehicle.model} ${vehicle.trim}` },
+        ]}
+      />
+      <h1 className={styles.pageTitle}>
+        {vehicle.year} {vehicle.make} {vehicle.model}
+      </h1>
+      <main className={styles.layout}>
       <div>
-        <h1 className={`show-mobile ${styles.mobiletitle}`}>
-          {vehicle.year} {vehicle.make} {vehicle.model}
-        </h1>
         <VehicleGallery images={vehicle.images} alt={`${vehicle.year} ${vehicle.make} ${vehicle.model}`} />
 
         <table className={styles.specsTable}>
@@ -93,9 +138,6 @@ export default async function VehicleDetailPage(props: PageProps<"/vehicles/[slu
       </div>
 
       <div>
-        <h1 className={`hide-mobile ${styles.title}`}>
-          {vehicle.year} {vehicle.make} {vehicle.model}
-        </h1>
         <table className={styles.specsTable}>
           <thead>
             <tr>
@@ -149,7 +191,6 @@ export default async function VehicleDetailPage(props: PageProps<"/vehicles/[slu
               initialBidCount={vehicle.bid_count}
               auctionStart={vehicle.auctionStart.toISOString()}
               auctionEnd={vehicle.auctionEnd.toISOString()}
-              buyNowPrice={vehicle.buy_now_price}
             />
           ) : (
             <>
@@ -177,16 +218,13 @@ export default async function VehicleDetailPage(props: PageProps<"/vehicles/[slu
                 variant="detail"
               />
 
-              {status === "upcoming" && (
-                <p className={styles.bidNotice}>Bidding opens when the auction starts.</p>
+              {status === "upcoming" && vehicle.buy_now_price !== null ? (
+                <BuyNowPanel vehicleId={vehicle.id} buyNowPrice={vehicle.buy_now_price} />
+              ) : (
+                status === "upcoming" && <p className={styles.bidNotice}>Bidding opens when the auction starts.</p>
               )}
 
-              {!hasEnded && (
-                <p className={styles.bidMeta}>
-                  Starting Bid: {formatCurrency(vehicle.starting_bid)}
-                  {vehicle.buy_now_price !== null && <> · Buy Now: {formatCurrency(vehicle.buy_now_price)}</>}
-                </p>
-              )}
+              {!hasEnded && <p className={styles.bidMeta}>Starting Bid: {formatCurrency(vehicle.starting_bid)}</p>}
             </>
           )}
         </div>
@@ -204,6 +242,7 @@ export default async function VehicleDetailPage(props: PageProps<"/vehicles/[slu
           </div>
         )}
       </div>
-    </main>
+      </main>
+    </>
   );
 }

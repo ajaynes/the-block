@@ -23,7 +23,7 @@ export function Footer() {
       <div className={styles.inner}>
         <div className={styles.top}>
           <div className={styles.brand}>
-            <Image src="/logo-light.svg" alt="The Block" width={140} height={19} />
+            <Image src="/logo-light.svg" alt="The Block" width={140} height={19} className={styles.logoImage} />
             <p className={styles.tagline}>Wholesale vehicle auctions, simplified.</p>
           </div>
 

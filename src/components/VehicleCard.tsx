@@ -8,9 +8,9 @@ import styles from "./VehicleCard.module.css";
 
 type Props = {
   vehicle: Vehicle;
-  /** Stacks the action buttons vertically on desktop — for narrower grids
-   *  (e.g. the PDP's related-auctions rail) where side-by-side buttons
-   *  don't have enough room to breathe. */
+  /** Stacks action buttons vertically on desktop for narrow grids
+   * with limited horizontal space.
+  * */
   stackActions?: boolean;
 };
 
@@ -60,11 +60,7 @@ export function VehicleCard({ vehicle, stackActions }: Props) {
       )}
       <div className={`${styles.actions} ${stackActions ? styles.actionsStacked : ""}`}>
         {hasEnded ? (
-          <Link
-            href={detailHref}
-            className={`btn btn-primary ${styles.actionButton} ${styles.viewDetailsButton}`}
-            style={{ width: "100%" }}
-          >
+          <Link href={detailHref} className={`btn btn-primary ${styles.actionButton}`} style={{ width: "100%" }}>
             View Details
           </Link>
         ) : (
