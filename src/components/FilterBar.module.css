@@ -32,6 +32,7 @@
 
   .sidebar {
     display: none;
+    align-self: stretch;
   }
 
   .sidebar[data-mobile-open="true"] {
@@ -130,6 +131,10 @@
   align-items: center;
   flex-wrap: wrap;
   gap: var(--space-2);
+}
+
+.chips:empty {
+  display: none;
 }
 
 .chip {
