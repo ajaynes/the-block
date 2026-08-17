@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { LiaSearchSolid } from "react-icons/lia";
+import { LiaSearchSolid,LiaGavelSolid, LiaUserAltSolid, LiaStarSolid } from "react-icons/lia";
 import { useRouter, useSearchParams } from "next/navigation";
 import {
   useEffect,
@@ -43,6 +43,7 @@ export function Header() {
  // Sync with URL's `q` param (the source of truth) so external updates,
  // like "Clear search", update the input directly.
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setQuery(searchParams.get("q") ?? "");
   }, [searchParams]);
 
@@ -70,6 +71,7 @@ export function Header() {
   useEffect(() => {
     const trimmed = query.trim();
     if (!trimmed) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setSuggestions([]);
       setSuggestOpen(false);
       setHighlightedIndex(-1);
@@ -152,7 +154,7 @@ export function Header() {
     <header className={styles.header}>
       <div className={styles.inner}>
         <Link href="/" className={styles.logo}>
-          <Image src="/logo.svg" alt="The Block" width={175} height={24} priority />
+          <Image src="/logo.svg" alt="The Block" width={175} height={24} priority className={styles.logoImage} />
         </Link>
 
         <div className={styles.search} ref={searchRef}>
@@ -255,14 +257,14 @@ export function Header() {
 
           {menuOpen && (
             <div className={styles.menu} role="menu">
-              <button type="button" className={styles.menuItem} role="menuitem">
-                My Account
+              <button type="button" className={styles.menuItem} role="menuitem" style={{display: "flex", alignItems: "center"}}>
+                <LiaUserAltSolid style={{height: 20, width: 20, marginRight: 10}} /> My Account
               </button>
-              <button type="button" className={styles.menuItem} role="menuitem">
-                My Bids
+              <button type="button" className={styles.menuItem} role="menuitem" style={{display: "flex", alignItems: "center"}}>
+                <LiaGavelSolid style={{height: 20, width: 20, marginRight: 10}} /> My Bids
               </button>
-              <button type="button" className={styles.menuItem} role="menuitem">
-                Watchlist
+              <button type="button" className={styles.menuItem} role="menuitem" style={{display: "flex", alignItems: "center"}}>
+                <LiaStarSolid style={{height: 20, width: 20, marginRight: 10}} /> Watchlist
               </button>
             </div>
           )}

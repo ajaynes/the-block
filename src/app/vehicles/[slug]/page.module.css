@@ -1,3 +1,12 @@
+.pageTitle {
+  width: 100%;
+  max-width: 1200px;
+  margin-inline: auto;
+  margin-top: var(--space-3);
+  margin-bottom: 0;
+  padding: 0 var(--space-5);
+}
+
 .layout {
   display: grid;
   grid-template-columns: 3fr 2fr;
@@ -57,15 +66,7 @@
   font-size: var(--font-size-lg);
 }
 
-/* right column: title, seller, status, bid box */
-
-.title {
-  margin-top: 0;
-}
-.mobiletitle {
-  margin-top: 0;
-  font-size: var(--font-size-2xl);
-}
+/* right column: seller, status, bid box */
 
 .lot {
   color: var(--color-text-muted);

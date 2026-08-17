@@ -1,0 +1,27 @@
+.wrapper {
+  width: 100%;
+  max-width: 600px;
+  margin-inline: auto;
+  padding: var(--space-8) var(--space-5);
+  text-align: center;
+}
+
+.code {
+  margin: 0;
+  font-size: var(--font-size-3xl);
+  font-weight: 700;
+  color: var(--color-accent);
+}
+
+.heading {
+  margin-top: var(--space-2);
+}
+
+.message {
+  margin-top: var(--space-3);
+  color: var(--color-text-muted);
+}
+
+.cta {
+  margin-top: var(--space-6);
+}

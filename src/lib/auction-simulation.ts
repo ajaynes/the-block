@@ -1,9 +1,6 @@
-// Client-only auction simulation: models a live auction's bid activity as
-// local state, seeded from the dataset but evolving independently in the
-// browser (mock bidders, anti-snipe extensions, the user's own bids). None
-// of this touches the server-side dataset — it's purely a demo of "what a
-// live bid flow feels like," persisted per-vehicle in localStorage so a
-// refresh doesn't reset the auction mid-demo.
+// Local-only auction simulation: manages live bids, mock activity, and
+// anti-snipe extensions directly in browser state, persisting via
+// `localStorage` so refreshes don't reset progress.
 
 export type SimulatedBid = {
   id: string;
@@ -26,39 +23,18 @@ export type AuctionSimAction =
   | { type: "SIMULATED_BID"; bidder: string; amount: number; timestamp: number }
   | { type: "USER_BID"; amount: number; timestamp: number };
 
-// The minimum a new bid must clear over the current one — mirrors real
-// auction platforms requiring a meaningful raise, not just +$1.
-export const MIN_INCREMENT = 100;
+// Sets minimum bid raise requirement and stepper increment value.
+export const MIN_INCREMENT = 250;
 
-export const BID_INCREMENT_OPTIONS = [100, 500, 1000] as const;
-export type BidIncrement = (typeof BID_INCREMENT_OPTIONS)[number];
-
-// If a bid (real or simulated) lands within this many ms of the close, push
-// the close out by this many ms — classic anti-sniping, cheap to do
-// entirely client-side since `endsAt` already lives in local state.
+// Auto-extends auction end time for last-second bids.
 const ANTI_SNIPE_WINDOW_MS = 2 * 60 * 1000;
 const ANTI_SNIPE_EXTENSION_MS = 2 * 60 * 1000;
 
 export const SIMULATED_BID_MIN_DELAY_MS = 10_000;
 export const SIMULATED_BID_MAX_DELAY_MS = 30_000;
 
-const FAKE_BIDDERS = [
-  "Jordan_M",
-  "CoastalMotors",
-  "TheGearhead",
-  "MapleRidgeAuto",
-  "QuickBidQueen",
-  "Vance88",
-  "AutoScout_Lee",
-  "NorthernDrives",
-  "RRLiu",
-  "BidBot_Sam",
-  "TrailheadTom",
-  "CarCollectorCA",
-  "SilverStreak",
-  "HighwayHunter",
-  "PrairieWheels",
-];
+// Generic labels mask simulated bidding activity and protect real user privacy.
+const FAKE_BIDDERS = Array.from({ length: 15 }, (_, i) => `Bidder ${i + 1}`);
 
 const SIMULATED_INCREMENTS = [100, 150, 200, 250, 500];
 

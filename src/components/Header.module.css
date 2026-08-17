@@ -22,6 +22,15 @@
   flex-shrink: 0;
 }
 
+/* The global `img { height: auto }` reset overrides the Image component's
+   height attribute without touching width, which Next.js warns about as a
+   distorted-aspect-ratio risk. Setting both explicitly (matching the props)
+   keeps it a fixed, non-fluid size and satisfies that check. */
+.logoImage {
+  width: 175px;
+  height: 24px;
+}
+
 .search {
   position: relative;
   flex: 1 1 auto;
@@ -219,5 +228,10 @@
     flex: 1 1 100%;
     max-width: none;
     margin-inline: 0;
+  }
+
+  /* Keeps font-size >= 16px to disable iOS Safari focus-zoom. */
+  .searchForm input {
+    font-size: 16px;
   }
 }

@@ -22,6 +22,14 @@
 
 .thumbSlide {
   padding: 0 var(--space-1);
+}
+
+.thumbButton {
+  display: block;
+  width: 100%;
+  padding: 0;
+  border: none;
+  background: none;
   cursor: pointer;
 }
 
@@ -34,11 +42,6 @@
   transition: border-color 0.15s ease, opacity 0.15s ease;
 }
 
-/* react-slick applies `.slick-current` to the active slide itself via its
-   own internal (non-React) DOM updates for `focusOnSelect` — mirroring that
-   here instead of tracking the index in React state, since a state-driven
-   class on our own node can desync from which physical DOM node slick just
-   moved/reused. */
 .thumbs :global(.slick-current) .thumbImage {
   border-color: var(--color-accent);
   opacity: 1;

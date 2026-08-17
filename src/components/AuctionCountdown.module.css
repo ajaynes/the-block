@@ -20,6 +20,10 @@
   color: var(--color-info);
 }
 
+.detail.live {
+  color: var(--color-accent);
+}
+
 .ended {
   color: rgba(255, 255, 255, 0.75);
 }

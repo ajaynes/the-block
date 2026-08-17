@@ -1,7 +1,7 @@
 "use client";
 
 import { usePathname, useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 import styles from "./FilterBar.module.css";
 
 export type FilterGroupKey = "auctionStatus" | "make" | "status" | "body" | "year";
@@ -22,6 +22,7 @@ type Props = {
   groups: FilterGroup[];
   selected: Record<FilterGroupKey, string[]>;
   sort: string;
+  children: ReactNode;
 };
 
 const VISIBLE_OPTIONS_LIMIT = 5;
@@ -39,7 +40,7 @@ function groupsWithHiddenSelection(
     .map((group) => group.key);
 }
 
-export function FilterBar({ groups, selected, sort }: Props) {
+export function FilterBar({ groups, selected, sort, children }: Props) {
   const router = useRouter();
   const pathname = usePathname();
 
@@ -214,39 +215,44 @@ export function FilterBar({ groups, selected, sort }: Props) {
         })}
       </aside>
 
-      <div className={styles.toolbar}>
-        <div className={styles.chips}>
-          {chips.map((chip) => (
-            <span key={`${chip.key}-${chip.value}`} className={styles.chip}>
-              {chip.label}: {chip.displayValue}
-              <button
-                type="button"
-                className={styles.chipRemove}
-                onClick={() => toggleValue(chip.key, chip.value)}
-                aria-label={`Remove ${chip.label}: ${chip.value} filter`}
-              >
-                ×
+      <div className={styles.contentArea}>
+        <div className={styles.toolbar}>
+          <div className={styles.chips}>
+            {chips.map((chip) => (
+              <span key={`${chip.key}-${chip.value}`} className={styles.chip}>
+                {chip.label}: {chip.displayValue}
+                <button
+                  type="button"
+                  className={styles.chipRemove}
+                  onClick={() => toggleValue(chip.key, chip.value)}
+                  aria-label={`Remove ${chip.label}: ${chip.value} filter`}
+                >
+                  ×
+                </button>
+              </span>
+            ))}
+            {activeCount > 0 && (
+              <button type="button" className={styles.resetAll} onClick={resetAll}>
+                Reset all
               </button>
-            </span>
-          ))}
-          {activeCount > 0 && (
-            <button type="button" className={styles.resetAll} onClick={resetAll}>
-              Reset all
-            </button>
-          )}
+            )}
+          </div>
+
+          <select
+            className={styles.sort}
+            value={localSort}
+            onChange={(e) => handleSortChange(e.target.value)}
+            aria-label="Sort by"
+          >
+            <option value="">Sort by</option>
+            <option value="ending-soonest">Ending soonest</option>
+            <option value="price-low">Price: Low to High</option>
+            <option value="price-high">Price: High to Low</option>
+            <option value="alphabetical">Alphabetical (A–Z)</option>
+          </select>
         </div>
 
-        <select
-          className={styles.sort}
-          value={localSort}
-          onChange={(e) => handleSortChange(e.target.value)}
-        >
-          <option value="">Sort by</option>
-          <option value="ending-soonest">Ending soonest</option>
-          <option value="price-low">Price: Low to High</option>
-          <option value="price-high">Price: High to Low</option>
-          <option value="alphabetical">Alphabetical (A–Z)</option>
-        </select>
+        {children}
       </div>
     </>
   );
