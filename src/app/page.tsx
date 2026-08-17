@@ -118,7 +118,7 @@ export default async function Home(props: PageProps<"/">) {
   return (
     <>
       <h1 className={styles.pageHeading}>Vehicle Auctions</h1>
-      <div className={styles.layout}>
+      <main className={styles.layout}>
       <FilterBar groups={filterGroups} selected={selected} sort={effectiveSort}>
         {search && (
           <p className={styles.searchNotice}>
@@ -152,7 +152,7 @@ export default async function Home(props: PageProps<"/">) {
           )}
         </nav>
       </FilterBar>
-      </div>
+      </main>
     </>
   );
 }

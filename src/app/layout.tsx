@@ -3,7 +3,6 @@ import { Poppins } from "next/font/google";
 import { Suspense } from "react";
 import { Footer } from "@/components/Footer";
 import { Header } from "@/components/Header";
-import { SITE_NAME, SITE_URL } from "@/lib/site";
 import "./globals.css";
 
 // Matches openlane.com's brand typeface.
@@ -14,10 +13,10 @@ const poppins = Poppins({
 });
 
 export const metadata: Metadata = {
-  metadataBase: new URL(SITE_URL),
+  metadataBase: new URL("https://localhost:3000"),
   title: {
-    default: `${SITE_NAME} | Wholesale Vehicle Auctions`,
-    template: `%s | ${SITE_NAME}`,
+    default: `OPENLANE | Wholesale Vehicle Auctions`,
+    template: `%s | OPENLANE`,
   },
   description:
     "Browse live, upcoming, and ended wholesale vehicle auctions. Bid in real time, track countdowns, and buy select vehicles instantly at a fixed price.",

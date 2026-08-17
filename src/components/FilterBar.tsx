@@ -242,6 +242,7 @@ export function FilterBar({ groups, selected, sort, children }: Props) {
             className={styles.sort}
             value={localSort}
             onChange={(e) => handleSortChange(e.target.value)}
+            aria-label="Sort by"
           >
             <option value="">Sort by</option>
             <option value="ending-soonest">Ending soonest</option>
